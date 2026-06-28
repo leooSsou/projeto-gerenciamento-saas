@@ -45,10 +45,11 @@ gantt
     - [ ] Definir exceções de negócio customizadas em [src/domain/exceptions/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/domain/exceptions/).
     - [ ] Criar interfaces e contratos abstratos dos repositórios em [src/domain/repositories/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/domain/repositories/).
     - [ ] Implementar os casos de uso purificados em Python: `CriarTenant` e `AutenticarUsuario` em [src/use_cases/autenticacao/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/use_cases/autenticacao/).
-  * **Infraestrutura, Banco e Web (Responsável: Leonardo)**:
+  * **Persistência e Modelagem de Banco (Responsável: Leonardo)**:
     - [ ] Mapear os modelos SQLAlchemy físicos de `tenants` e `usuarios` em [src/infrastructure/database/models.py](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/infrastructure/database/models.py) e gerar a migração Alembic.
-    - [ ] Desenvolver utilitários de segurança: hashing de senhas com `bcrypt` e manipulação de tokens JWT em [src/infrastructure/security/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/infrastructure/security/).
     - [ ] Implementar repositórios SQLAlchemy concretos e configurar o filtro de sessão global do `tenant_id` para isolamento.
+  * **Segurança, Web e Testes (Responsável: Douglas)**:
+    - [ ] Desenvolver utilitários de segurança: hashing de senhas com `bcrypt` e manipulação de tokens JWT em [src/infrastructure/security/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/infrastructure/security/).
     - [ ] Desenvolver as rotas web do FastAPI (`/auth/register`, `/auth/login`) e a dependência de injeção `get_current_user` em [src/infrastructure/web/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/infrastructure/web/).
     - [ ] Escrever a suíte de testes automatizados de integração e de simulação de vazamento multi-tenant (*SaaS leakage*) em [tests/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/tests/).
 
