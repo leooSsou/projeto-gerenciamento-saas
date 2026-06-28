@@ -41,7 +41,7 @@ gantt
   - [x] Criação de branch `chore/setup-inicial` e envio dos commits no padrão Conventional Commits.
 * **Autenticação, JWT e Segurança** (Próximo Passo):
   * **Regras de Negócio e Domínio (Responsável: Jonathas)**:
-    - [ ] Criar entidades de domínio puras de `Tenant` e `Usuario` em Python puro ([src/domain/entities/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/domain/entities/)).
+    - [x] Criar entidades de domínio puras de `Tenant` e `Usuario` em Python puro ([src/domain/entities/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/domain/entities/)).
     - [ ] Definir exceções de negócio customizadas em [src/domain/exceptions/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/domain/exceptions/).
     - [ ] Criar interfaces e contratos abstratos dos repositórios em [src/domain/repositories/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/domain/repositories/).
     - [ ] Implementar os casos de uso purificados em Python: `CriarTenant` e `AutenticarUsuario` em [src/use_cases/autenticacao/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/use_cases/autenticacao/).
