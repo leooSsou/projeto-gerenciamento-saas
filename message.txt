@@ -1,0 +1,308 @@
+# Especificação Arquitetural e Funcional: Gerenciador de Lojas SaaS (Módulo Administrativo e de Estoque)
+
+---
+
+## Resumo Executivo
+Este documento apresenta a especificação técnica e funcional para a construção da primeira fase do **Gerenciador de Lojas SaaS**, focando exclusivamente nos módulos de **Administração de Retaguarda, Cadastro, Controle Financeiro e Estoque Avançado (Multiloja)**. O sistema operará no modelo Software como Serviço (SaaS) com isolamento lógico multi-tenant, permitindo que múltiplos lojistas e franquias independentes gerenciem seu catálogo de produtos, controlem estoques por filial através de importação de Notas Fiscais (XML de NF-e), realizem transferências internas de mercadorias e analisem relatórios de desempenho e saúde financeira do negócio.
+
+A interface do Ponto de Venda (PDV/Boca de Caixa) e integrações de hardware térmico local estão **excluídas** deste escopo de desenvolvimento inicial, sendo consideradas frentes de expansão futura.
+
+---
+
+## 1. Introdução e Contextualização Operacional
+Para redes de lojas e comércios em expansão, o controle centralizado do estoque e a visibilidade financeira em tempo real são determinantes para a eficiência logística e rentabilidade. O controle manual ou descentralizado gera problemas como a falta de produtos nas prateleiras, excesso de mercadorias paradas sem giro e falta de controle sobre contas a pagar para fornecedores.
+
+Esta primeira fase do sistema resolve estes gargalos operacionais através de:
+1. **Controle de Estoque Multiloja unificado**: Visualização em matriz dos saldos de cada produto em cada filial física em tempo real.
+2. **Entrada Simplificada por XML**: Importação rápida de Notas Fiscais de compra (XML de NF-e), atualizando preços de custo e cadastrando produtos de forma ágil.
+3. **Auditoria Física de Estoque**: Ferramenta de inventário rotativo para contagem física de mercadorias e registro automático de perdas.
+4. **Transferências Auditadas**: Fluxo de transporte de produtos entre lojas com rastreamento de status e detecção de perdas/divergências logísticas.
+5. **Retaguarda Financeira e CRM**: Controle de Contas a Pagar/Receber, gestão de fornecedores e controle de crédito de crediário de clientes.
+
+---
+
+## 2. Tecnologias e Arquitetura do Sistema
+
+### 2.1 Ecossistema de Tecnologia (Tech Stack)
+* **Back-end**: Python 3.11+ utilizando o framework **FastAPI** para alta performance e documentação OpenAPI nativa.
+* **Persistência de Dados (ORM)**: **SQLAlchemy** ou **SQLModel** para mapeamento objeto-relacional estruturado.
+* **Banco de Dados**: **PostgreSQL** (com SQLite para desenvolvimento local rápido).
+* **Mensageria e Filas (Async Workers)**: **Redis** como Message Broker e **Celery** para envio assíncrono de relatórios analíticos de fechamento e alertas de estoque baixo.
+* **Frontend**: **React** com **Tailwind CSS**, estruturado de forma responsiva para acesso em computadores (desktop/notebook) de administradores e gerentes.
+
+### 2.2 Multi-tenancy Lógico (SaaS)
+O sistema adota o modelo de **Shared Database, Shared Schema com coluna `tenant_id`**. O isolamento dos dados de cada lojista é garantido a nível de banco de dados através da injeção do filtro global do tenant no SQLAlchemy, extraído do token JWT durante cada requisição à API.
+
+### 2.3 Estrutura de Pastas sob a Clean Architecture (FastAPI)
+O back-end do projeto adota a **Arquitetura Limpa (Clean Architecture)** para garantir manutenibilidade e isolamento de regras de negócio:
+
+```plaintext
+gerenciador-lojas-backend/
+│
+├── app/
+│   ├── domain/                   # CAMADA 1: Núcleo do Domínio (Regras de Domínio Puras)
+│   │   ├── entities/             # Objetos de domínio (Classes Python puras, sem SQLAlchemy)
+│   │   │   ├── tenant.py
+│   │   │   ├── user.py
+│   │   │   ├── product.py
+│   │   │   └── financial.py
+│   │   └── repositories/         # Contratos e Interfaces (Abstrações de persistência)
+│   │       ├── product_repo.py
+│   │       ├── tenant_repo.py
+│   │       └── financial_repo.py
+│   │
+│   ├── use_cases/                # CAMADA 2: Casos de Uso (Regras de Negócio da Aplicação)
+│   │   ├── auth/
+│   │   │   └── login_use_case.py # Executa a lógica de login e geração de sessão
+│   │   ├── inventory/
+│   │   │   ├── import_nfe.py     # Lógica de processamento de XML de NF-e
+│   │   │   └── audit_stock.py    # Caso de uso de inventário físico rotativo
+│   │   └── transfers/
+│   │       └── process_transfer.py # Máquina de estados de transferência de mercadoria
+│   │
+│   ├── adapters/                 # CAMADA 3: Adaptadores de Interface (Mapeadores)
+│   │   ├── controllers/          # Controladores (Rotas do FastAPI - recebem JSON e chamam Casos de Uso)
+│   │   │   ├── auth_controller.py
+│   │   │   ├── product_controller.py
+│   │   │   └── financial_controller.py
+│   │   ├── presenters/           # Validadores/Serializadores de dados (Pydantic Schemas de entrada e saída)
+│   │   │   ├── request_schemas.py
+│   │   │   └── response_schemas.py
+│   │   └── repositories/         # Repositórios concretos (Implementações de banco usando SQLAlchemy)
+│   │       ├── sqlalchemy_product_repo.py
+│   │       └── sqlalchemy_tenant_repo.py
+│   │
+│   └── infrastructure/           # CAMADA 4: Frameworks & Drivers (Detalhes de Infraestrutura)
+│       ├── db/                   # Inicialização do banco, sessions, modelos ORM SQLAlchemy e migrações
+│       │   ├── session.py
+│       │   ├── models.py         # Mapeamento do banco relacional (tabelas do banco)
+│       │   └── migrations/       # Migrações Alembic
+│       ├── web/                  # Setup do FastAPI (Servidor Web, CORS, Middlewares de Tenant)
+│       │   ├── main.py
+│       │   └── routes.py
+│       ├── security/             # Hash de senhas (bcrypt) e criptografia JWT
+│       │   └── tokens.py
+│       ├── workers/              # Configuração assíncrona (Message broker Redis e Celery)
+│       │   └── celery_app.py
+│       └── gateways/             # Conectores de APIs externas (envio de e-mail e WhatsApp)
+│           ├── email_gateway.py
+│           └── whatsapp_gateway.py
+│
+├── tests/                        # Testes Unitários (Domain/Use Cases) e Integração (Adapters/Infrastructure)
+├── docker-compose.yml            # Orquestração local (FastAPI, Postgres, Redis)
+├── requirements.txt              # Bibliotecas
+└── .env                          # Chaves, segredos e conexões
+```
+
+### 2.4 Mapa do Fluxo de Telas (Frontend React)
+
+Como o PDV/Caixa foi excluído deste escopo, o fluxo de navegação do frontend foca exclusivamente nas rotas do painel administrativo (retaguarda) e gerencial:
+
+```mermaid
+graph TD
+    %% Nós de Entrada
+    Login["/login (Tela de Login Unificada)"]
+    
+    %% Decisão de Rota por Perfil (JWT)
+    Decide{"Decisão de Perfil (Role)"}
+    Login --> Decide
+    
+    %% Fluxo SuperAdmin (Gestão SaaS)
+    Decide -->|SuperAdmin| SADash["/superadmin/dashboard<br>(KPIs Globais SaaS)"]
+    SADash --> SATenants["/superadmin/tenants<br>(CRUD Inquilinos e Assinaturas)"]
+    SADash --> SAPlans["/superadmin/plans<br>(CRUD Planos e Limites)"]
+    
+    %% Fluxo Lojista Admin (Gestão de Rede)
+    Decide -->|Lojista Admin| ADash["/admin/dashboard<br>(Resumo Geral da Rede)"]
+    ADash --> AStores["/admin/lojas<br>(CRUD de Filiais)"]
+    ADash --> AStaff["/admin/funcionarios<br>(CRUD de Colaboradores e RBAC)"]
+    ADash --> AProducts["/admin/produtos<br>(Catálogo Global & Markup)"]
+    AProducts --> AImportXML["/admin/produtos/importar-xml<br>(Upload de NF-e)"]
+    ADash --> AInventory["/admin/estoque<br>(Saldo Multiloja e Histórico)"]
+    AInventory --> AAudit["/admin/estoque/auditoria<br>(Inventário Físico Lote)"]
+    ADash --> ACustomers["/admin/clientes<br>(CRM e Contas de Crediário)"]
+    ADash --> ASuppliers["/admin/fornecedores<br>(CRUD Fornecedores)"]
+    ADash --> AFinance["/admin/financeiro<br>(Contas a Pagar/Receber)"]
+    ADash --> AReports["/admin/relatorios<br>(Curva ABC, Comissões e Custos)"]
+    
+    %% Fluxo Gerente de Loja (Gestão de Loja Local)
+    Decide -->|Gerente de Loja| GDash["/gerente/dashboard<br>(Visão Local da Filial)"]
+    GDash --> GInventory["/gerente/estoque<br>(Inventário Local e Auditorias)"]
+    GDash --> GTransfers["/gerente/transferencias<br>(Solicitar/Despachar/Receber)"]
+    GDash --> GSales["/gerente/vendas<br>(Visualização de Histórico de Vendas Locais)"]
+```
+
+---
+
+## 3. Modelo de Domínio (Dados)
+
+Abaixo é apresentado o modelo de entidades estrutural. As tabelas de `Sale` (Venda) e `SaleItem` são mapeadas de forma simplificada no banco para fins de histórico e registro manual de vendas, garantindo que o banco de dados esteja preparado para a integração do PDV no futuro.
+
+```mermaid
+classDiagram
+    class Tenant {
+        +int id
+        +string name
+        +string cnpj
+        +string status
+        +string plan_type
+        +datetime subscription_expires_at
+        +datetime created_at
+    }
+    class User {
+        +int id
+        +int tenant_id
+        +string username
+        +string name
+        +string password_hash
+        +string profile
+        +int assigned_store_id
+        +datetime created_at
+    }
+    class Store {
+        +int id
+        +int tenant_id
+        +string name
+        +string address
+        +string phone
+        +boolean is_active
+        +datetime created_at
+    }
+    class Product {
+        +int id
+        +int tenant_id
+        +string sku
+        +string name
+        +string description
+        +float cost_price
+        +float sale_price
+        +string barcode
+        +int supplier_id
+        +datetime created_at
+    }
+    class Inventory {
+        +int id
+        +int tenant_id
+        +int store_id
+        +int product_id
+        +int quantity
+        +int minimum_stock
+        +datetime updated_at
+    }
+    class StockTransfer {
+        +int id
+        +int tenant_id
+        +int origin_store_id
+        +int destination_store_id
+        +int product_id
+        +int quantity
+        +string status
+        +int requested_by_id
+        +int approved_by_id
+        +string justification
+        +datetime created_at
+    }
+    class Client {
+        +int id
+        +int tenant_id
+        +string name
+        +string cpf_cnpj
+        +string email
+        +string phone
+        +float credit_limit
+        +float credit_balance
+        +datetime created_at
+    }
+    class Supplier {
+        +int id
+        +int tenant_id
+        +string name
+        +string cnpj
+        +string email
+        +string phone
+        +datetime created_at
+    }
+    class FinancialRecord {
+        +int id
+        +int tenant_id
+        +int store_id
+        +string type
+        +string description
+        +float amount
+        +datetime due_date
+        +datetime paid_date
+        +string status
+        +int supplier_id
+        +datetime created_at
+    }
+
+    Tenant "1" --> "*" User : contains
+    Tenant "1" --> "*" Store : operates
+    Tenant "1" --> "*" Product : catalog
+    Tenant "1" --> "*" StockTransfer : registers
+    Tenant "1" --> "*" Client : crm
+    Tenant "1" --> "*" Supplier : vendors
+    Tenant "1" --> "*" FinancialRecord : financial_logs
+    Store "1" --> "*" Inventory : stock
+    Product "1" --> "*" Inventory : levels
+    Store "1" --> "*" FinancialRecord : accounting
+    Store "1" --> "*" StockTransfer : sends/receives
+    Supplier "1" --> "*" Product : supplies
+    Supplier "1" --> "*" FinancialRecord : generates_payable
+```
+
+---
+
+## 4. Especificação de Módulos & Funcionalidades Detalhadas
+
+### 4.1 Módulo SuperAdmin (Faturamento e Gestão do SaaS)
+* **Dashboard do Ecossistema SaaS**: Visualização de métricas financeiras acumuladas (MRR, ARR), quantidade de Tenants ativos e gráfico de novas adesões.
+* **Gestão de Clientes (Tenants)**: CRUD para gerenciar empresas parceiras contratantes, permitindo ativação ou suspensão por inadimplência.
+* **Parametrização de Planos e Preços**: CRUD de planos (Bronze, Prata, Ouro) limitando número máximo de lojas cadastradas, produtos ou usuários de acordo com a assinatura contratada.
+
+### 4.2 Módulo 1: Autenticação & Permissões (RBAC com Tenant Isolation)
+* **Login Multi-tenant**: Acesso seguro via token JWT carregando o `tenant_id` e a função do colaborador.
+* **Controle de Acesso Baseado em Perfis (RBAC)**:
+  - **Lojista Admin**: Acesso irrestrito a configurações globais, CRUD de produtos do catálogo centralizado, faturamento financeiro de todas as filiais e gestão de lojas/funcionários.
+  - **Gerente de Loja**: Acesso restrito aos dados da loja vinculada. Visualiza relatórios de estoque da filial, inicia e aprova transferências de mercadorias e coordena auditorias físicas.
+* **Log de Auditoria de Ações**: Rastreamento detalhado de alterações críticas (ajustes manuais de estoque, alterações de preços de custo).
+
+### 4.3 Módulo 2: Catálogo de Produtos & Estoque Avançado (Foco da Onda 1)
+* **Catálogo Centralizado**: Cadastro único de produtos para o Tenant contendo SKU, descrição, código de barras (EAN-13), preço de custo, preço de venda e margem bruta calculada.
+* **Precificação Inteligente por Markup**: O lojista define uma margem de markup desejada e o sistema sugere o preço de venda ideal com base no custo de aquisição.
+* **Entrada de Estoque via XML de NF-e**: Importação do arquivo XML emitido pelo fornecedor. O sistema lê automaticamente a quantidade de itens comprada, reajusta o custo médio de inventário e cadastra novos produtos ausentes de forma ágil.
+* **Matriz de Estoque Multiloja**: Tabela analítica que apresenta a quantidade em estoque de cada produto distribuída em todas as filiais físicas simultaneamente.
+* **Inventário de Auditoria Física**: Processo de contagem de mercadorias rotativo. O gerente de loja executa a contagem física via scanner ou tablet e o sistema aponta quebras/perdas de estoque, gerando relatórios de impacto financeiro antes do reajuste automático de inventário.
+* **Alerta de Estoque Mínimo**: Parametrização de limite mínimo para cada produto. Dispara tarefas assíncronas em segundo plano notificando os gerentes de quebras iminentes.
+
+### 4.4 Módulo 3: Transferência de Mercadorias Interlojas
+* **Máquina de Estados de Transferência**:
+  - *Solicitado*: A Loja A abre pedido para a Loja B.
+  - *Despachado*: A Loja B separa os produtos físicos, emitindo a saída temporária (estoque transita em segundo plano).
+  - *Recebido*: A Loja A realiza a contagem física do recebimento e encerra o fluxo creditando seu estoque.
+* **Controle de Divergências**: Se a contagem de recebimento for inferior à de saída, o fluxo muda para o status "Divergente", exigindo justificativas e bloqueando o ajuste automático até homologação do Lojista Admin.
+
+### 4.5 Módulo 4: Gestão Financeira & CRM (Clientes e Fornecedores)
+* **Gestão de Fornecedores**: CRUD de fornecedores vinculados às Notas Fiscais e catálogos de compra.
+* **CRM e Contas de Crédito**: Cadastro de clientes fidelidade com controle de saldo de **Crediário Próprio ("Pendura")** e limite de crédito pré-aprovado para faturamento faturado.
+* **Contas a Pagar & Receber**:
+  - *Contas a Pagar*: Lançamento de despesas da retaguarda e faturas de compras geradas a partir da importação de XML de NF-e, controlando datas de vencimento.
+  - *Contas a Receber*: Registro e quitação de parcelas financeiras pendentes (crediário).
+
+### 4.6 Módulo 5: Relatórios & Analytics
+* **Dashboard Gerencial do Lojista**: Gráfico acumulado de receitas vs. despesas, margem de lucro por loja e ticket médio geral.
+* **Curva ABC de Produtos**: Relação de produtos ordenados por lucratividade e volume de giro em estoque.
+* **Relatório Diário de Faturamento**: E-mail resumido enviado de forma automatizada ao final do dia para os donos dos Tenants (Celery/Redis task).
+
+---
+
+## 5. Infraestrutura, DevOps e Padrões de Testes
+
+### 5.1 Docker Compose e Hospedagem
+A retaguarda será empacotada em containers independentes (FastAPI API, PostgreSQL Database, Redis Queue e Celery Worker) facilitando o deploy unificado em VPS Linux na Locaweb.
+
+### 5.2 Estrutura de Testes Automatizados Rígida (TDD)
+Para garantir que futuras atualizações não quebrem o fluxo administrativo:
+* **Testes de Integração de API (pytest + httpx)**: Simulações automáticas de requisições de rede (Criação de Tenant -> Login -> Cadastro de Produto -> Lançamento de Estoque -> Solicitação de Transferência -> Validação de saldos).
+* **Testes de Vazamento de Tenants**: Validação lógica no banco de dados para garantir que dados de estoque de um lojista jamais apareçam nas rotas de outro.
+* **CI/CD Blocker**: Configuração do GitHub Actions para rodar a suíte inteira em qualquer Pull Request, bloqueando o merge caso algum teste de estoque, faturamento ou permissões falhe.
