@@ -1,6 +1,5 @@
 import pytest
-from uuid import uuid4
-from sqlalchemy import select, update, delete, text
+from sqlalchemy import update, delete, text
 from sqlalchemy.orm import Session
 from src.infrastructure.database.models import TenantModel, UsuarioModel
 

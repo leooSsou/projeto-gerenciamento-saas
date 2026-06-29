@@ -1,18 +1,14 @@
 import sys
 import os
 from pathlib import Path
+from logging.config import fileConfig
+from sqlalchemy import engine_from_config, pool
+from alembic import context
 from dotenv import load_dotenv
 
 # Adiciona o diretório raiz ao sys.path para que o módulo 'src' possa ser importado
 root_dir = str(Path(__file__).resolve().parents[4])
 sys.path.insert(0, root_dir)
-
-from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
-from alembic import context
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv(dotenv_path=os.path.join(root_dir, ".env"))
@@ -33,7 +29,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from src.infrastructure.database.models import Base
+from src.infrastructure.database.models import Base  # noqa: E402
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
