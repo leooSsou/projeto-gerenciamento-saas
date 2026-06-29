@@ -1,0 +1,33 @@
+{
+  "name": "Gerenciador de Lojas SaaS - Dev Container",
+  // Aponta para o arquivo docker-compose.yml existente na raiz do projeto
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  // O VS Code irá se conectar ao container do backend
+  "service": "backend",
+  // O diretório de trabalho padrão dentro do container
+  "workspaceFolder": "/app",
+  
+  // Customizações para o VS Code dentro do container
+  "customizations": {
+    "vscode": {
+      // Extensões recomendadas que serão instaladas automaticamente no container
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "redhat.vscode-yaml"
+      ],
+      // Configurações do VS Code no container
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.analysis.extraPaths": [
+          "/app"
+        ]
+      }
+    }
+  },
+  // O usuário padrão do container
+  "remoteUser": "root"
+}
