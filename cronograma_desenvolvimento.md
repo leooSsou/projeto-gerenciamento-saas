@@ -42,9 +42,9 @@ gantt
 * **Autenticação, JWT e Segurança** (Próximo Passo):
   * **Regras de Negócio e Domínio (Responsável: Jonathas)**:
     - [x] Criar entidades de domínio puras de `Tenant` e `Usuario` em Python puro ([src/domain/entities/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/domain/entities/)).
-    - [ ] Definir exceções de negócio customizadas em [src/domain/exceptions/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/domain/exceptions/).
-    - [ ] Criar interfaces e contratos abstratos dos repositórios em [src/domain/repositories/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/domain/repositories/).
-    - [ ] Implementar os casos de uso purificados em Python: `CriarTenant` e `AutenticarUsuario` em [src/use_cases/autenticacao/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/use_cases/autenticacao/).
+    - [x] Definir exceções de negócio customizadas em [src/domain/exceptions/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/domain/exceptions/).
+    - [x] Criar interfaces e contratos abstratos dos repositórios em [src/domain/repositories/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/domain/repositories/).
+    - [x] Implementar os casos de uso purificados em Python: `CriarTenant` e `AutenticarUsuario` em [src/use_cases/autenticacao/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/use_cases/autenticacao/).
   * **Persistência e Modelagem de Banco (Responsável: Leonardo)**:
     - [ ] Mapear os modelos SQLAlchemy físicos de `tenants` e `usuarios` em [src/infrastructure/database/models.py](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/infrastructure/database/models.py) e gerar a migração Alembic.
     - [ ] Implementar repositórios SQLAlchemy concretos e configurar o filtro de sessão global do `tenant_id` para isolamento.
