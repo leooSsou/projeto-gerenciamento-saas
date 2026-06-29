@@ -19,9 +19,26 @@ services:
     container_name: saas_redis
     restart: always
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: saas_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres_password@postgres:5432/gerenciador_saas"
+      DATABASE_TEST_URL: "sqlite:///:memory:"
+    depends_on:
+      - postgres
+      - redis
 
 volumes:
   postgres_data:
