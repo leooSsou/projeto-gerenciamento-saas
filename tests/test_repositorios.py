@@ -1,7 +1,5 @@
 import pytest
-from uuid import uuid4
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import StatementError
 
 # Importações dos modelos e repositórios (que falharão inicialmente no TDD)
 from src.infrastructure.database.models import TenantModel, UsuarioModel
