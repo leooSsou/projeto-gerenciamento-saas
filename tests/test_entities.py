@@ -21,20 +21,27 @@ def test_criar_tenant_valido():
 
 def test_criar_tenant_cnpj_invalido():
     """
-    Garante que criar um Tenant com CNPJ com tamanho incorreto levante ValueError.
+    Garante que criar um Tenant com CNPJ inválido matematicamente ou incorreto levante ValueError.
     """
-    with pytest.raises(ValueError, match="O CNPJ deve conter exatamente 14 dígitos"):
+    with pytest.raises(ValueError, match="CNPJ inválido"):
         Tenant(
             nome_fantasia="Lojas Girardi",
             razao_social="Girardi e Cia Ltda",
-            cnpj="12345" # Inválido
+            cnpj="12345" # Inválido por tamanho
+        )
+        
+    with pytest.raises(ValueError, match="CNPJ inválido"):
+        Tenant(
+            nome_fantasia="Lojas Girardi",
+            razao_social="Girardi e Cia Ltda",
+            cnpj="11111111111111" # Inválido matematicamente (dígitos idênticos)
         )
 
 def test_criar_tenant_nome_vazio():
     """
     Garante que criar um Tenant com nome fantasia vazio levante ValueError.
     """
-    with pytest.raises(ValueError, match="O nome fantasia não pode ser vazio"):
+    with pytest.raises(ValueError, match="O nome fantasia deve ser uma string não vazia"):
         Tenant(
             nome_fantasia="   ",
             razao_social="Girardi e Cia Ltda",
@@ -48,13 +55,13 @@ def test_criar_usuario_valido():
     tenant_id = uuid4()
     usuario = Usuario(
         nome="Jonathas Girardi",
-        email="jonathas@email.com",
+        email="Jonathas@Email.Com  ",  # Será normalizado
         senha_hash="$2b$12$Kj9x...",
         role="DONO",
         tenant_id=tenant_id
     )
     assert usuario.nome == "Jonathas Girardi"
-    assert usuario.email == "jonathas@email.com"
+    assert usuario.email == "jonathas@email.com"  # Normalizado (lower e strip)
     assert usuario.role == "DONO"
     assert usuario.tenant_id == tenant_id
     assert usuario.id is not None
@@ -72,6 +79,15 @@ def test_criar_usuario_email_invalido():
             role="DONO",
             tenant_id=uuid4()
         )
+        
+    with pytest.raises(ValueError, match="formato do e-mail .* é inválido"):
+        Usuario(
+            nome="Jonathas Girardi",
+            email="email@dominio..com", # Ponto duplo inválido
+            senha_hash="$2b$12$Kj9x...",
+            role="DONO",
+            tenant_id=uuid4()
+        )
 
 def test_criar_usuario_role_invalida():
     """
@@ -85,3 +101,32 @@ def test_criar_usuario_role_invalida():
             role="GERENTE_LOJA", # Inválida, deve ser GERENTE ou DONO ou ADMIN_SAAS
             tenant_id=uuid4()
         )
+
+def test_criar_usuario_gerente_sem_loja():
+    """
+    Garante que criar um GERENTE sem associar loja levante ValueError.
+    """
+    with pytest.raises(ValueError, match="perfil de GERENTE devem estar associados a uma loja"):
+        Usuario(
+            nome="Gerente Silva",
+            email="gerente@email.com",
+            senha_hash="$2b$12$Kj9x...",
+            role="GERENTE",
+            tenant_id=uuid4(),
+            loja_atribuida_id=None
+        )
+
+def test_criar_usuario_dono_com_loja():
+    """
+    Garante que criar um DONO associado a uma loja específica levante ValueError.
+    """
+    with pytest.raises(ValueError, match="não devem ter uma loja específica atribuída"):
+        Usuario(
+            nome="Dono Carlos",
+            email="dono@email.com",
+            senha_hash="$2b$12$Kj9x...",
+            role="DONO",
+            tenant_id=uuid4(),
+            loja_atribuida_id=uuid4()  # DONO deve gerenciar o tenant todo, sem loja específica
+        )
+

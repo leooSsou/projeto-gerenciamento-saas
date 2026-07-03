@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from src.domain.entities.usuario import Usuario
 from src.domain.repositories.usuario_repository import UsuarioRepository
-from src.domain.exceptions.business import CredenciaisInvalidasException
+from src.domain.repositories.tenant_repository import TenantRepository
+from src.domain.exceptions.business import CredenciaisInvalidasException, TenantNaoEncontradoException
 
 class ServicoCriptografia(ABC):
     """
@@ -12,6 +13,13 @@ class ServicoCriptografia(ABC):
     def verificar_senha(self, senha_plana: str, senha_hash: str) -> bool:
         """
         Retorna True se a senha plana coincidir com o hash, senão False.
+        """
+        pass
+
+    @abstractmethod
+    def gerar_hash(self, senha_plana: str) -> str:
+        """
+        Gera um hash seguro a partir de uma senha em texto plano.
         """
         pass
 
@@ -34,9 +42,11 @@ class AutenticarUsuario:
     def __init__(
         self,
         usuario_repo: UsuarioRepository,
+        tenant_repo: TenantRepository,
         servico_cripto: ServicoCriptografia
     ) -> None:
         self.usuario_repo = usuario_repo
+        self.tenant_repo = tenant_repo
         self.servico_cripto = servico_cripto
 
     def executar(self, input_data: AutenticarUsuarioInput) -> AutenticarUsuarioOutput:
@@ -45,8 +55,14 @@ class AutenticarUsuario:
         if not usuario:
             raise CredenciaisInvalidasException()
 
-        # 2. Valida a senha utilizando a abstração do serviço de criptografia
+        # 2. Valida se o Tenant associado existe na base de dados
+        tenant = self.tenant_repo.obter_por_id(usuario.tenant_id)
+        if not tenant:
+            raise TenantNaoEncontradoException()
+
+        # 3. Valida a senha utilizando a acoplagem do serviço de criptografia
         if not self.servico_cripto.verificar_senha(input_data.senha_plana, usuario.senha_hash):
             raise CredenciaisInvalidasException()
 
         return AutenticarUsuarioOutput(usuario=usuario)
+
