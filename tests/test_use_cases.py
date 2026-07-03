@@ -68,6 +68,9 @@ class FakeServicoCriptografia(ServicoCriptografia):
         # Lógica simples para mock: assume que a senha bate se for igual ao hash com prefixo "hash_"
         return senha_hash == f"hash_{senha_plana}"
 
+    def gerar_hash(self, senha_plana: str) -> str:
+        return f"hash_{senha_plana}"
+
 # -----------------------------------------------------------------------------
 # Testes do Caso de Uso: CriarTenant
 # -----------------------------------------------------------------------------
@@ -75,7 +78,8 @@ class FakeServicoCriptografia(ServicoCriptografia):
 def test_criar_tenant_sucesso() -> None:
     tenant_repo = InMemoryTenantRepository()
     usuario_repo = InMemoryUsuarioRepository()
-    use_case = CriarTenant(tenant_repo, usuario_repo)
+    servico_cripto = FakeServicoCriptografia()
+    use_case = CriarTenant(tenant_repo, usuario_repo, servico_cripto)
 
     input_data = CriarTenantInput(
         nome_fantasia="Loja Principal",
@@ -83,7 +87,7 @@ def test_criar_tenant_sucesso() -> None:
         cnpj="12.345.678/0001-95",
         dono_nome="Carlos Silva",
         dono_email="carlos@email.com",
-        dono_senha_hash="hash_senha123"
+        dono_senha_plana="senha123"
     )
 
     output = use_case.executar(input_data)
@@ -95,6 +99,7 @@ def test_criar_tenant_sucesso() -> None:
     assert output.usuario.email == "carlos@email.com"
     assert output.usuario.role == "DONO"
     assert output.usuario.tenant_id == output.tenant.id
+    assert output.usuario.senha_hash == "hash_senha123"
 
     # Verifica se foram salvos nos repositórios
     assert tenant_repo.obter_por_id(output.tenant.id) is not None
@@ -104,7 +109,8 @@ def test_criar_tenant_sucesso() -> None:
 def test_criar_tenant_cnpj_duplicado() -> None:
     tenant_repo = InMemoryTenantRepository()
     usuario_repo = InMemoryUsuarioRepository()
-    use_case = CriarTenant(tenant_repo, usuario_repo)
+    servico_cripto = FakeServicoCriptografia()
+    use_case = CriarTenant(tenant_repo, usuario_repo, servico_cripto)
 
     # Cadastra um tenant com o mesmo CNPJ previamente
     tenant_repo.salvar(Tenant(
@@ -119,7 +125,7 @@ def test_criar_tenant_cnpj_duplicado() -> None:
         cnpj="12.345.678/0001-95",
         dono_nome="Carlos Silva",
         dono_email="carlos@email.com",
-        dono_senha_hash="hash_senha123"
+        dono_senha_plana="senha123"
     )
 
     with pytest.raises(CnpjEmUsoException):
@@ -129,7 +135,8 @@ def test_criar_tenant_cnpj_duplicado() -> None:
 def test_criar_tenant_email_dono_duplicado() -> None:
     tenant_repo = InMemoryTenantRepository()
     usuario_repo = InMemoryUsuarioRepository()
-    use_case = CriarTenant(tenant_repo, usuario_repo)
+    servico_cripto = FakeServicoCriptografia()
+    use_case = CriarTenant(tenant_repo, usuario_repo, servico_cripto)
 
     # Cadastra um usuário com o mesmo e-mail previamente
     usuario_repo.salvar(Usuario(
@@ -146,7 +153,7 @@ def test_criar_tenant_email_dono_duplicado() -> None:
         cnpj="12.345.678/0001-95",
         dono_nome="Carlos Silva",
         dono_email="carlos@email.com",
-        dono_senha_hash="hash_senha123"
+        dono_senha_plana="senha123"
     )
 
     with pytest.raises(EmailEmUsoException):
@@ -158,16 +165,26 @@ def test_criar_tenant_email_dono_duplicado() -> None:
 
 def test_autenticar_usuario_sucesso() -> None:
     usuario_repo = InMemoryUsuarioRepository()
+    tenant_repo = InMemoryTenantRepository()
     servico_cripto = FakeServicoCriptografia()
-    use_case = AutenticarUsuario(usuario_repo, servico_cripto)
+    use_case = AutenticarUsuario(usuario_repo, tenant_repo, servico_cripto)
 
-    # Cria o usuário cadastrado no mock
+    # Cria e salva o Tenant associado
+    tenant = Tenant(
+        nome_fantasia="Empresa Teste",
+        razao_social="Empresa Teste Ltda",
+        cnpj="12.345.678/0001-95"
+    )
+    tenant_repo.salvar(tenant)
+
+    # Cria o usuário cadastrado no mock (com loja para perfil GERENTE)
     usuario = Usuario(
         nome="Ana Souza",
         email="ana@email.com",
         senha_hash="hash_senha123",
         role="GERENTE",
-        tenant_id=uuid4()
+        tenant_id=tenant.id,
+        loja_atribuida_id=uuid4()
     )
     usuario_repo.salvar(usuario)
 
@@ -183,8 +200,9 @@ def test_autenticar_usuario_sucesso() -> None:
 
 def test_autenticar_usuario_email_inexistente() -> None:
     usuario_repo = InMemoryUsuarioRepository()
+    tenant_repo = InMemoryTenantRepository()
     servico_cripto = FakeServicoCriptografia()
-    use_case = AutenticarUsuario(usuario_repo, servico_cripto)
+    use_case = AutenticarUsuario(usuario_repo, tenant_repo, servico_cripto)
 
     input_data = AutenticarUsuarioInput(
         email="inexistente@email.com",
@@ -197,15 +215,25 @@ def test_autenticar_usuario_email_inexistente() -> None:
 
 def test_autenticar_usuario_senha_incorreta() -> None:
     usuario_repo = InMemoryUsuarioRepository()
+    tenant_repo = InMemoryTenantRepository()
     servico_cripto = FakeServicoCriptografia()
-    use_case = AutenticarUsuario(usuario_repo, servico_cripto)
+    use_case = AutenticarUsuario(usuario_repo, tenant_repo, servico_cripto)
+
+    # Cria e salva o Tenant associado
+    tenant = Tenant(
+        nome_fantasia="Empresa Teste",
+        razao_social="Empresa Teste Ltda",
+        cnpj="12.345.678/0001-95"
+    )
+    tenant_repo.salvar(tenant)
 
     usuario_repo.salvar(Usuario(
         nome="Ana Souza",
         email="ana@email.com",
         senha_hash="hash_senha123",
         role="GERENTE",
-        tenant_id=uuid4()
+        tenant_id=tenant.id,
+        loja_atribuida_id=uuid4()
     ))
 
     input_data = AutenticarUsuarioInput(
@@ -215,3 +243,4 @@ def test_autenticar_usuario_senha_incorreta() -> None:
 
     with pytest.raises(CredenciaisInvalidasException):
         use_case.executar(input_data)
+
