@@ -29,3 +29,15 @@ def verificar_senha(senha_plana: str, senha_hash: str) -> bool:
     senha_bytes = senha_plana.encode("utf-8")
     hash_bytes = senha_hash.encode("utf-8")
     return bcrypt.checkpw(senha_bytes, hash_bytes)
+
+
+from src.use_cases.autenticacao.autenticar_usuario import ServicoCriptografia
+
+class BcryptServicoCriptografia(ServicoCriptografia):
+    """
+    Implementação concreta do serviço de criptografia utilizando o bcrypt.
+    Implementa o contrato ServicoCriptografia definido nos Casos de Uso.
+    """
+    def verificar_senha(self, senha_plana: str, senha_hash: str) -> bool:
+        return verificar_senha(senha_plana, senha_hash)
+
