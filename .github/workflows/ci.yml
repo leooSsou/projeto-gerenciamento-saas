@@ -2,7 +2,7 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main, develop, chore/setup-inicial ]
+    branches: [ '**' ]
   pull_request:
     branches: [ main, develop ]
 
