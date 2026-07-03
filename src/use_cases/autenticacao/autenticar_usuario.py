@@ -15,6 +15,13 @@ class ServicoCriptografia(ABC):
         """
         pass
 
+    @abstractmethod
+    def gerar_hash(self, senha_plana: str) -> str:
+        """
+        Gera um hash seguro a partir de uma senha em texto plano.
+        """
+        pass
+
 
 @dataclass(frozen=True)
 class AutenticarUsuarioInput:
