@@ -91,4 +91,3 @@ def test_bloqueio_de_vazamento_sem_tenant_id(db_session: Session) -> None:
     # Tenta fazer uma consulta a UsuarioModel (que herda de HasTenant)
     with pytest.raises(ValueError, match="Acesso ao banco de dados bloqueado: tenant_id não configurado na sessão."):
         db_session.query(UsuarioModel).all()
-

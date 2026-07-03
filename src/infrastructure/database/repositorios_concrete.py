@@ -29,6 +29,7 @@ class RepositorioTenantSQLAlchemy(TenantRepository):
             model.nome_fantasia = tenant.nome_fantasia
             model.razao_social = tenant.razao_social
             model.cnpj = tenant.cnpj
+            model.data_cadastro = tenant.data_cadastro
             
         # O commit agora é delegado para a transação geral da rota/caso de uso.
         # Apenas damos flush para carregar possíveis IDs e gerados pelo banco.
@@ -83,11 +84,9 @@ class RepositorioUsuarioSQLAlchemy(UsuarioRepository):
                 email=usuario.email,
                 senha_hash=usuario.senha_hash,
                 role=usuario.role,
+                tenant_id=usuario.tenant_id,
                 loja_atribuida_id=usuario.loja_atribuida_id
             )
-            # HasTenant mixin injeta tenant_id automaticamente nas queries do SQLAlchemy,
-            # mas precisamos definir na persistência do modelo
-            model.tenant_id = usuario.tenant_id
             self.db.add(model)
         else:
             model.nome = usuario.nome
@@ -95,6 +94,7 @@ class RepositorioUsuarioSQLAlchemy(UsuarioRepository):
             model.senha_hash = usuario.senha_hash
             model.role = usuario.role
             model.loja_atribuida_id = usuario.loja_atribuida_id
+            model.tenant_id = usuario.tenant_id
             
         self.db.flush()
         
@@ -135,4 +135,3 @@ class RepositorioUsuarioSQLAlchemy(UsuarioRepository):
             tenant_id=model.tenant_id,
             loja_atribuida_id=model.loja_atribuida_id
         )
-
