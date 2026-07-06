@@ -1,18 +1,17 @@
 import os
-import pytest
 from typing import Generator
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from dotenv import load_dotenv
 
-# Carrega variáveis de ambiente
-load_dotenv()
-
-# Importações do projeto
 from src.infrastructure.web.main import app
 from src.infrastructure.database.session import get_db
 from src.infrastructure.database.models import Base
+
+# Carrega variáveis de ambiente
+load_dotenv()
 
 # Utiliza DATABASE_TEST_URL para testes
 DATABASE_TEST_URL = os.getenv("DATABASE_TEST_URL", "sqlite:///./gerenciador_saas_test.db")

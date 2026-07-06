@@ -1,0 +1,58 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Executar Testes Automatizados
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Python no Host (caso necessário)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Criar arquivo .env temporário para CI
+        run: |
+          echo "DATABASE_URL=postgresql://postgres:postgres_password@postgres:5432/gerenciador_saas" > .env
+          echo "DATABASE_TEST_URL=sqlite:///:memory:" >> .env
+          echo "REDIS_URL=redis://redis:6379/0" >> .env
+          echo "JWT_SECRET=ci-secret-key-for-testing-1234567890!" >> .env
+          echo "JWT_ALGORITHM=HS256" >> .env
+          echo "ACCESS_TOKEN_EXPIRE_MINUTES=1440" >> .env
+
+      - name: Construir e iniciar os containers do Docker
+        run: docker compose up -d --build
+
+      - name: Aguardar o Postgres iniciar corretamente
+        run: |
+          if docker compose config --services | grep -q "^backend$"; then
+            echo "Serviço 'backend' encontrado. Utilizando script do container..."
+            docker compose run --rm backend python tests/wait_for_postgres.py
+          else
+            echo "Serviço 'backend' não encontrado. Utilizando verificação via exec..."
+            docker compose exec -T postgres sh -c "until pg_isready -h localhost -p 5432 -U postgres; do echo 'Aguardando banco...'; sleep 1; done"
+          fi
+
+      - name: Executar suite de testes via Pytest
+        run: |
+          if docker compose config --services | grep -q "^backend$"; then
+            echo "Rodando testes dentro do container Docker..."
+            docker compose run --rm backend pytest
+          else
+            echo "Rodando testes localmente no host do runner..."
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+            # Sobrescreve o host do Postgres para localhost:5433 pois estamos fora do container
+            echo "DATABASE_URL=postgresql://postgres:postgres_password@localhost:5433/gerenciador_saas" > .env
+            echo "DATABASE_TEST_URL=sqlite:///:memory:" >> .env
+            PYTHONPATH=. pytest
+          fi

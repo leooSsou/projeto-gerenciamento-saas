@@ -41,29 +41,49 @@ gantt
   - [x] Criação de branch `chore/setup-inicial` e envio dos commits no padrão Conventional Commits.
 * **Autenticação, JWT e Segurança** (Próximo Passo):
   * **Regras de Negócio e Domínio (Responsável: Jonathas)**:
-    - [x] Criar entidades de domínio puras de `Tenant` e `Usuario` em Python puro ([src/domain/entities/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/domain/entities/)).
-    - [ ] Definir exceções de negócio customizadas em [src/domain/exceptions/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/domain/exceptions/).
-    - [ ] Criar interfaces e contratos abstratos dos repositórios em [src/domain/repositories/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/domain/repositories/).
-    - [ ] Implementar os casos de uso purificados em Python: `CriarTenant` e `AutenticarUsuario` em [src/use_cases/autenticacao/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/use_cases/autenticacao/).
+    - [x] Criar entidades de domínio puras de `Tenant` e `Usuario` em Python puro ([src/domain/entities/](src/domain/entities/)).
+    - [x] Definir exceções de negócio customizadas em [src/domain/exceptions/](src/domain/exceptions/).
+    - [x] Criar interfaces e contratos abstratos dos repositórios em [src/domain/repositories/](src/domain/repositories/).
+    - [x] Implementar os casos de uso purificados em Python: `CriarTenant` e `AutenticarUsuario` em [src/use_cases/autenticacao/](src/use_cases/autenticacao/).
   * **Persistência e Modelagem de Banco (Responsável: Leonardo)**:
-    - [ ] Mapear os modelos SQLAlchemy físicos de `tenants` e `usuarios` em [src/infrastructure/database/models.py](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/infrastructure/database/models.py) e gerar a migração Alembic.
-    - [ ] Implementar repositórios SQLAlchemy concretos e configurar o filtro de sessão global do `tenant_id` para isolamento.
+    - [x] Mapear os modelos SQLAlchemy físicos de `tenants` e `usuarios` em [src/infrastructure/database/models.py](src/infrastructure/database/models.py) e gerar a migração Alembic.
+    - [x] Implementar repositórios SQLAlchemy concretos e configurar o filtro de sessão global do `tenant_id` para isolamento.
   * **Segurança, Web e Testes (Responsável: Douglas)**:
-    - [ ] Desenvolver utilitários de segurança: hashing de senhas com `bcrypt` e manipulação de tokens JWT em [src/infrastructure/security/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/infrastructure/security/).
-    - [ ] Desenvolver as rotas web do FastAPI (`/auth/register`, `/auth/login`) e a dependência de injeção `get_current_user` em [src/infrastructure/web/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/src/infrastructure/web/).
-    - [ ] Escrever a suíte de testes automatizados de integração e de simulação de vazamento multi-tenant (*SaaS leakage*) em [tests/](file:///C:/Users/jonat/Documents/projeto-gerenciamento-saas/tests/).
+    - [x] Desenvolver utilitários de segurança: hashing de senhas com `bcrypt` e manipulação de tokens JWT em [src/infrastructure/security/](src/infrastructure/security/).
+    - [x] Desenvolver as rotas web do FastAPI (`/auth/register`, `/auth/login`) e a dependência de injeção `get_current_user` em [src/infrastructure/web/](src/infrastructure/web/).
+    - [x] Escrever a suíte de testes automatizados de integração e de simulação de vazamento multi-tenant (*SaaS leakage*) em [tests/](tests/).
 
 ---
 
 ### 📦 Onda 2: Catálogo Centralizado (Cadastros Base)
 *Objetivo: Criar as tabelas e rotas necessárias para popular o banco de dados antes da movimentação de mercadorias.*
 
-- [ ] Implementação dos modelos e repositórios de `lojas` (filiais físicas).
-- [ ] Implementação de `fornecedores` e `clientes` (com limite de crédito de crediário).
-- [ ] Implementação de `produtos` (SKU, descrição, margens, preços).
-- [ ] Regra de negócio: Cálculo de precificação inteligente sugerida por **Markup**.
-- [ ] Rotas de CRUD para todos os cadastros no FastAPI.
-- [ ] Testes unitários de validação de schemas do Pydantic.
+#### 👥 Divisão de Atividades por Responsável
+
+##### 👤 Jonathas (Regras de Negócio e Domínio)
+* **Atividades Independentes**:
+  - [ ] **[Urgência: Alta]** Criar entidades de domínio puras (`Loja`, `Produto`) e contratos abstratos de seus repositórios em [src/domain/](src/domain/).
+  - [ ] **[Urgência: Média]** Criar entidades de domínio puras (`Cliente`, `Fornecedor`) e contratos abstratos de seus repositórios em [src/domain/](src/domain/).
+  - [ ] **[Urgência: Média]** Implementar a regra de negócio do cálculo de precificação inteligente sugerida por **Markup** no domínio.
+* **Atividades Dependentes**:
+  - [ ] **[Urgência: Alta]** Implementar os casos de uso purificados em Python para gerenciamento (CRUD) de Lojas e Produtos (depende da criação das entidades de domínio correspondentes).
+  - [ ] **[Urgência: Média]** Implementar os casos de uso purificados em Python para gerenciamento de Clientes e Fornecedores (depende da criação das entidades de domínio correspondentes).
+
+##### 👤 Leonardo (Persistência, Web e Testes)
+* **Atividades Independentes**:
+  - [ ] **[Urgência: Alta]** Desenvolver os schemas do Pydantic para validação de entrada/saída de Lojas e Produtos em `src/infrastructure/web/schemas/`.
+  - [ ] **[Urgência: Média]** Desenvolver os schemas do Pydantic para validação de entrada/saída de Clientes e Fornecedores.
+* **Atividades Dependentes**:
+  - [ ] **[Urgência: Alta]** Mapear os modelos SQLAlchemy físicos de `lojas` e `produtos` em `models.py` (depende das entidades de domínio criadas por Jonathas).
+  - [ ] **[Urgência: Alta]** Gerar e aplicar a migração do Alembic para as tabelas `lojas` e `produtos`.
+  - [ ] **[Urgência: Alta]** Implementar repositórios SQLAlchemy concretos para Lojas e Produtos (depende das interfaces abstratas de repositório criadas por Jonathas).
+  - [ ] **[Urgência: Alta]** Desenvolver as rotas web do FastAPI de CRUD para Lojas e Produtos (depende dos repositórios de Leonardo e casos de uso de Jonathas).
+  - [ ] **[Urgência: Alta]** Escrever testes unitários de validação de schemas Pydantic e testes de integração de API de Lojas/Produtos (depende das rotas FastAPI e requer isolamento de tenant).
+  - [ ] **[Urgência: Média]** Mapear os modelos SQLAlchemy físicos de `clientes` e `fornecedores` (depende das entidades de domínio criadas por Jonathas).
+  - [ ] **[Urgência: Média]** Gerar e aplicar a migração do Alembic para as tabelas `clientes` e `fornecedores`.
+  - [ ] **[Urgência: Média]** Implementar repositórios SQLAlchemy concretos para Clientes e Fornecedores (depende das interfaces abstratas de repositório criadas por Jonathas).
+  - [ ] **[Urgência: Média]** Desenvolver as rotas web do FastAPI de CRUD para Clientes e Fornecedores (depende dos repositórios de Leonardo e casos de uso de Jonathas).
+  - [ ] **[Urgência: Média]** Escrever testes de integração de API para Clientes/Fornecedores (depende das rotas FastAPI e inclui validação de limite de crédito).
 
 ---
 

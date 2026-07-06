@@ -1,10 +1,8 @@
 import pytest
-from uuid import uuid4
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import StatementError
-
-# Importações dos modelos e repositórios (que falharão inicialmente no TDD)
-from src.infrastructure.database.models import TenantModel, UsuarioModel
+from src.domain.entities.tenant import Tenant
+from src.domain.entities.usuario import Usuario
+from src.infrastructure.database.models import UsuarioModel
 from src.infrastructure.database.repositorios_concrete import (
     RepositorioTenantSQLAlchemy,
     RepositorioUsuarioSQLAlchemy,
@@ -21,18 +19,18 @@ def test_persistir_tenant_e_usuario(db_session: Session) -> None:
     repo_tenant = RepositorioTenantSQLAlchemy(db_session)
     repo_usuario = RepositorioUsuarioSQLAlchemy(db_session)
     
-    # Criando o Tenant
-    tenant = TenantModel(
+    # Criando o Tenant (Entidade pura do Domínio)
+    tenant = Tenant(
         nome_fantasia="Lojas do Leo",
         razao_social="Leonardo de Souza Lojas Ltda",
-        cnpj="12345678000195"
+        cnpj="12.345.678/0001-95"  # CNPJ Válido matematicamente
     )
     tenant_salvo = repo_tenant.salvar(tenant)
     assert tenant_salvo.id is not None
     assert tenant_salvo.cnpj == "12345678000195"
     
-    # Criando o Usuário associado ao Tenant
-    usuario = UsuarioModel(
+    # Criando o Usuário associado ao Tenant (Entidade pura do Domínio)
+    usuario = Usuario(
         nome="Leonardo Souza",
         email="leo@email.com",
         senha_hash="hashed_password",
@@ -55,11 +53,11 @@ def test_filtro_global_tenant_id(db_session: Session) -> None:
     repo_tenant = RepositorioTenantSQLAlchemy(db_session)
     repo_usuario = RepositorioUsuarioSQLAlchemy(db_session)
     
-    tenant_a = repo_tenant.salvar(TenantModel(nome_fantasia="Tenant A", razao_social="Tenant A Ltda", cnpj="11111111000111"))
-    tenant_b = repo_tenant.salvar(TenantModel(nome_fantasia="Tenant B", razao_social="Tenant B Ltda", cnpj="22222222000222"))
+    tenant_a = repo_tenant.salvar(Tenant(nome_fantasia="Tenant A", razao_social="Tenant A Ltda", cnpj="12.345.678/0001-95"))
+    tenant_b = repo_tenant.salvar(Tenant(nome_fantasia="Tenant B", razao_social="Tenant B Ltda", cnpj="45.997.418/0001-53"))
     
-    user_a = repo_usuario.salvar(UsuarioModel(nome="User A", email="usera@email.com", senha_hash="hash", role="GERENTE", tenant_id=tenant_a.id))
-    user_b = repo_usuario.salvar(UsuarioModel(nome="User B", email="userb@email.com", senha_hash="hash", role="GERENTE", tenant_id=tenant_b.id))
+    user_a = repo_usuario.salvar(Usuario(nome="User A", email="usera@email.com", senha_hash="hash", role="DONO", tenant_id=tenant_a.id))
+    user_b = repo_usuario.salvar(Usuario(nome="User B", email="userb@email.com", senha_hash="hash", role="DONO", tenant_id=tenant_b.id))
     
     db_session.commit()
     
