@@ -1,4 +1,5 @@
 import bcrypt
+from src.use_cases.autenticacao.autenticar_usuario import ServicoCriptografia
 
 def gerar_hash_senha(senha_plana: str) -> str:
     """
@@ -30,8 +31,6 @@ def verificar_senha(senha_plana: str, senha_hash: str) -> bool:
     hash_bytes = senha_hash.encode("utf-8")
     return bcrypt.checkpw(senha_bytes, hash_bytes)
 
-
-from src.use_cases.autenticacao.autenticar_usuario import ServicoCriptografia
 
 class BcryptServicoCriptografia(ServicoCriptografia):
     """

@@ -1,4 +1,3 @@
-import pytest
 from fastapi.testclient import TestClient
 from datetime import timedelta
 from src.infrastructure.security.jwt_handler import criar_token_acesso
