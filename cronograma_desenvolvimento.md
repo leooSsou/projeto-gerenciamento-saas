@@ -62,7 +62,8 @@ gantt
 
 ##### 👤 Jonathas (Regras de Negócio e Domínio)
 * **Atividades Independentes**:
-  - [ ] **[Urgência: Alta]** Criar entidades de domínio puras (`Loja`, `Produto`) e contratos abstratos de seus repositórios em [src/domain/](src/domain/).
+  - [x] **[Urgência: Alta]** Criar entidade de domínio pura de `Loja` e contrato abstrato de seu repositório em [src/domain/](src/domain/).
+  - [ ] **[Urgência: Alta]** Criar entidade de domínio pura de `Produto` e contrato abstrato de seu repositório em [src/domain/](src/domain/).
   - [ ] **[Urgência: Média]** Criar entidades de domínio puras (`Cliente`, `Fornecedor`) e contratos abstratos de seus repositórios em [src/domain/](src/domain/).
   - [ ] **[Urgência: Média]** Implementar a regra de negócio do cálculo de precificação inteligente sugerida por **Markup** no domínio.
 * **Atividades Dependentes**:
