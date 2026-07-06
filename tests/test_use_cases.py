@@ -1,15 +1,19 @@
 import pytest
 from uuid import UUID, uuid4
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 from src.domain.entities.tenant import Tenant
 from src.domain.entities.usuario import Usuario
+from src.domain.entities.loja import Loja
 from src.domain.repositories.tenant_repository import TenantRepository
 from src.domain.repositories.usuario_repository import UsuarioRepository
+from src.domain.repositories.loja_repository import LojaRepository
 from src.domain.exceptions.business import (
     CnpjEmUsoException,
     EmailEmUsoException,
     CredenciaisInvalidasException,
+    LojaNaoEncontradaException,
+    CnpjLojaEmUsoException,
 )
 from src.use_cases.autenticacao.criar_tenant import (
     CriarTenant,
@@ -19,6 +23,14 @@ from src.use_cases.autenticacao.autenticar_usuario import (
     AutenticarUsuario,
     AutenticarUsuarioInput,
     ServicoCriptografia,
+)
+from src.use_cases.catalogo.gerenciar_loja import (
+    CriarLoja,
+    CriarLojaInput,
+    ObterLoja,
+    ListarLojas,
+    AtualizarLoja,
+    AtualizarLojaInput,
 )
 
 # -----------------------------------------------------------------------------
@@ -243,4 +255,156 @@ def test_autenticar_usuario_senha_incorreta() -> None:
 
     with pytest.raises(CredenciaisInvalidasException):
         use_case.executar(input_data)
+
+
+# -----------------------------------------------------------------------------
+# Mocks e Testes do Catálogo de Lojas (Onda 2 - TDD)
+# -----------------------------------------------------------------------------
+
+class InMemoryLojaRepository(LojaRepository):
+    def __init__(self) -> None:
+        self.lojas: Dict[UUID, Loja] = {}
+
+    def salvar(self, loja: Loja) -> Loja:
+        self.lojas[loja.id] = loja
+        return loja
+
+    def obter_por_id(self, id: UUID, tenant_id: UUID) -> Optional[Loja]:
+        loja = self.lojas.get(id)
+        if loja and loja.tenant_id == tenant_id:
+            return loja
+        return None
+
+    def obter_por_cnpj(self, cnpj: str, tenant_id: UUID) -> Optional[Loja]:
+        cnpj_limpo = "".join(filter(str.isdigit, cnpj))
+        for loja in self.lojas.values():
+            if loja.cnpj == cnpj_limpo and loja.tenant_id == tenant_id:
+                return loja
+        return None
+
+    def listar_todas(self, tenant_id: UUID) -> List[Loja]:
+        return [loja for loja in self.lojas.values() if loja.tenant_id == tenant_id]
+
+
+def test_criar_loja_sucesso() -> None:
+    loja_repo = InMemoryLojaRepository()
+    use_case = CriarLoja(loja_repo)
+    tenant_id = uuid4()
+
+    input_data = CriarLojaInput(
+        nome="Filial Centro",
+        cnpj="25.923.825/0001-09",
+        endereco="Av. Central, 100",
+        tenant_id=tenant_id
+    )
+
+    output = use_case.executar(input_data)
+    assert output.loja.nome == "Filial Centro"
+    assert output.loja.cnpj == "25923825000109"
+    assert output.loja.endereco == "Av. Central, 100"
+    assert output.loja.tenant_id == tenant_id
+    assert output.loja.ativo is True
+
+
+def test_criar_loja_cnpj_duplicado() -> None:
+    loja_repo = InMemoryLojaRepository()
+    use_case = CriarLoja(loja_repo)
+    tenant_id = uuid4()
+
+    loja_existente = Loja(
+        nome="Outra Loja",
+        cnpj="25.923.825/0001-09",
+        endereco="Rua Teste, 10",
+        tenant_id=tenant_id
+    )
+    loja_repo.salvar(loja_existente)
+
+    input_data = CriarLojaInput(
+        nome="Filial Centro",
+        cnpj="25.923.825/0001-09",
+        endereco="Av. Central, 100",
+        tenant_id=tenant_id
+    )
+
+    with pytest.raises(CnpjLojaEmUsoException):
+        use_case.executar(input_data)
+
+
+def test_obter_loja_sucesso() -> None:
+    loja_repo = InMemoryLojaRepository()
+    use_case = ObterLoja(loja_repo)
+    tenant_id = uuid4()
+
+    loja = Loja(
+        nome="Filial Norte",
+        cnpj="05.292.609/0001-03",
+        endereco="Av. Norte, 200",
+        tenant_id=tenant_id
+    )
+    loja_repo.salvar(loja)
+
+    output = use_case.executar(loja_id=loja.id, tenant_id=tenant_id)
+    assert output.loja.id == loja.id
+    assert output.loja.nome == "Filial Norte"
+
+
+def test_obter_loja_nao_encontrada() -> None:
+    loja_repo = InMemoryLojaRepository()
+    use_case = ObterLoja(loja_repo)
+    tenant_id = uuid4()
+
+    with pytest.raises(LojaNaoEncontradaException):
+        use_case.executar(loja_id=uuid4(), tenant_id=tenant_id)
+
+
+def test_listar_lojas() -> None:
+    loja_repo = InMemoryLojaRepository()
+    use_case = ListarLojas(loja_repo)
+    tenant_a = uuid4()
+    tenant_b = uuid4()
+
+    loja_a1 = Loja(nome="A1", cnpj="25.923.825/0001-09", endereco="End", tenant_id=tenant_a)
+    loja_a2 = Loja(nome="A2", cnpj="05.292.609/0001-03", endereco="End", tenant_id=tenant_a)
+    loja_b1 = Loja(nome="B1", cnpj="67.827.595/0001-24", endereco="End", tenant_id=tenant_b)
+
+    loja_repo.salvar(loja_a1)
+    loja_repo.salvar(loja_a2)
+    loja_repo.salvar(loja_b1)
+
+    output_a = use_case.executar(tenant_id=tenant_a)
+    assert len(output_a.lojas) == 2
+    assert any(loja.nome == "A1" for loja in output_a.lojas)
+    assert any(loja.nome == "A2" for loja in output_a.lojas)
+
+    output_b = use_case.executar(tenant_id=tenant_b)
+    assert len(output_b.lojas) == 1
+    assert output_b.lojas[0].nome == "B1"
+
+
+def test_atualizar_loja_sucesso() -> None:
+    loja_repo = InMemoryLojaRepository()
+    use_case = AtualizarLoja(loja_repo)
+    tenant_id = uuid4()
+
+    loja = Loja(
+        nome="Filial Centro",
+        cnpj="25.923.825/0001-09",
+        endereco="Av. Central, 100",
+        tenant_id=tenant_id
+    )
+    loja_repo.salvar(loja)
+
+    input_data = AtualizarLojaInput(
+        id=loja.id,
+        nome="Filial Centro Renovada",
+        endereco="Av. Central, 150",
+        ativo=False,
+        tenant_id=tenant_id
+    )
+
+    output = use_case.executar(input_data)
+    assert output.loja.nome == "Filial Centro Renovada"
+    assert output.loja.endereco == "Av. Central, 150"
+    assert output.loja.ativo is False
+
 

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from uuid import UUID
 
 class RegisterRequest(BaseModel):
@@ -21,8 +21,7 @@ class RegisterResponse(BaseModel):
     dono_id: UUID
     dono_email: str
 
-    class ConfigDict:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class LoginRequest(BaseModel):
     """
@@ -49,5 +48,37 @@ class UserResponse(BaseModel):
     tenant_id: UUID
     loja_atribuida_id: UUID | None = None
 
-    class ConfigDict:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LojaCreateRequest(BaseModel):
+    """
+    Schema para requisição de criação de uma nova Loja.
+    """
+    nome: str = Field(..., min_length=1, max_length=100, description="Nome da filial/loja.")
+    cnpj: str = Field(..., min_length=14, max_length=18, description="CNPJ da filial/loja.")
+    endereco: str = Field(..., min_length=1, max_length=255, description="Endereço físico completo.")
+
+
+class LojaUpdateRequest(BaseModel):
+    """
+    Schema para requisição de atualização dos dados da Loja.
+    """
+    nome: str = Field(..., min_length=1, max_length=100, description="Nome da filial/loja.")
+    endereco: str = Field(..., min_length=1, max_length=255, description="Endereço físico completo.")
+    ativo: bool = Field(..., description="Status de atividade da loja.")
+
+
+class LojaResponse(BaseModel):
+    """
+    Schema para retorno das informações de uma Loja.
+    """
+    id: UUID
+    nome: str
+    cnpj: str
+    endereco: str
+    tenant_id: UUID
+    ativo: bool
+
+    model_config = ConfigDict(from_attributes=True)
+

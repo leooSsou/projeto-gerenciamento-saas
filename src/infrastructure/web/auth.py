@@ -32,46 +32,49 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)) -> Registe
     """
     Registra um novo inquilino (Tenant) e cria o respectivo usuário administrador (DONO).
     """
-    # Ignora o filtro de tenant para permitir o cadastro inicial do tenant e seu primeiro usuário
-    db.info["ignore_tenant_filter"] = True
-
-    tenant_repo = RepositorioTenantSQLAlchemy(db)
-    usuario_repo = RepositorioUsuarioSQLAlchemy(db)
-    servico_cripto = BcryptServicoCriptografia()
-    use_case = CriarTenant(tenant_repo, usuario_repo, servico_cripto)
-
-    input_data = CriarTenantInput(
-        nome_fantasia=request.nome_fantasia,
-        razao_social=request.razao_social,
-        cnpj=request.cnpj,
-        dono_nome=request.dono_nome,
-        dono_email=str(request.dono_email),
-        dono_senha_plana=request.dono_senha
-    )
-
     try:
-        output = use_case.executar(input_data)
-        return RegisterResponse(
-            tenant_id=output.tenant.id,
-            nome_fantasia=output.tenant.nome_fantasia,
-            dono_id=output.usuario.id,
-            dono_email=output.usuario.email
+        # Ignora o filtro de tenant para permitir o cadastro inicial do tenant e seu primeiro usuário
+        db.info["ignore_tenant_filter"] = True
+
+        tenant_repo = RepositorioTenantSQLAlchemy(db)
+        usuario_repo = RepositorioUsuarioSQLAlchemy(db)
+        servico_cripto = BcryptServicoCriptografia()
+        use_case = CriarTenant(tenant_repo, usuario_repo, servico_cripto)
+
+        input_data = CriarTenantInput(
+            nome_fantasia=request.nome_fantasia,
+            razao_social=request.razao_social,
+            cnpj=request.cnpj,
+            dono_nome=request.dono_nome,
+            dono_email=str(request.dono_email),
+            dono_senha_plana=request.dono_senha
         )
-    except CnpjEmUsoException as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"O CNPJ '{e.cnpj}' já está cadastrado no sistema."
-        )
-    except EmailEmUsoException as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"O e-mail '{e.email}' já está em uso por outro usuário."
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e)
-        )
+
+        try:
+            output = use_case.executar(input_data)
+            return RegisterResponse(
+                tenant_id=output.tenant.id,
+                nome_fantasia=output.tenant.nome_fantasia,
+                dono_id=output.usuario.id,
+                dono_email=output.usuario.email
+            )
+        except CnpjEmUsoException as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"O CNPJ '{e.cnpj}' já está cadastrado no sistema."
+            )
+        except EmailEmUsoException as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"O e-mail '{e.email}' já está em uso por outro usuário."
+            )
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=str(e)
+            )
+    finally:
+        db.info.pop("ignore_tenant_filter", None)
 
 
 @router.post("/login", response_model=LoginResponse)
@@ -79,35 +82,38 @@ def login(request: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
     """
     Autentica um usuário e retorna um token de acesso JWT.
     """
-    # Ignora o filtro de tenant durante a autenticação para permitir a busca do usuário pelo e-mail
-    db.info["ignore_tenant_filter"] = True
-
-    tenant_repo = RepositorioTenantSQLAlchemy(db)
-    usuario_repo = RepositorioUsuarioSQLAlchemy(db)
-    servico_cripto = BcryptServicoCriptografia()
-    use_case = AutenticarUsuario(usuario_repo, tenant_repo, servico_cripto)
-
-    input_data = AutenticarUsuarioInput(
-        email=str(request.email),
-        senha_plana=request.senha
-    )
-
     try:
-        output = use_case.executar(input_data)
-        
-        # Gera o token de acesso injetando tenant_id e role obrigatórios
-        access_token = criar_token_acesso(
-            sub=str(output.usuario.id),
-            tenant_id=str(output.usuario.tenant_id),
-            role=output.usuario.role
+        # Ignora o filtro de tenant durante a autenticação para permitir a busca do usuário pelo e-mail
+        db.info["ignore_tenant_filter"] = True
+
+        tenant_repo = RepositorioTenantSQLAlchemy(db)
+        usuario_repo = RepositorioUsuarioSQLAlchemy(db)
+        servico_cripto = BcryptServicoCriptografia()
+        use_case = AutenticarUsuario(usuario_repo, tenant_repo, servico_cripto)
+
+        input_data = AutenticarUsuarioInput(
+            email=str(request.email),
+            senha_plana=request.senha
         )
-        
-        return LoginResponse(access_token=access_token)
-    except CredenciaisInvalidasException:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="E-mail ou senha incorretos."
-        )
+
+        try:
+            output = use_case.executar(input_data)
+            
+            # Gera o token de acesso injetando tenant_id e role obrigatórios
+            access_token = criar_token_acesso(
+                sub=str(output.usuario.id),
+                tenant_id=str(output.usuario.tenant_id),
+                role=output.usuario.role
+            )
+            
+            return LoginResponse(access_token=access_token)
+        except CredenciaisInvalidasException:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="E-mail ou senha incorretos."
+            )
+    finally:
+        db.info.pop("ignore_tenant_filter", None)
 
 
 @router.get("/me", response_model=UserResponse)

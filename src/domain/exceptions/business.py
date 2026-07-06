@@ -45,3 +45,21 @@ class UsuarioNaoEncontradoException(DomainException):
     """
     def __init__(self, identifier: str) -> None:
         super().__init__(f"Usuário com identificador '{identifier}' não foi encontrado.")
+
+
+class LojaNaoEncontradaException(DomainException):
+    """
+    Exceção lançada quando a busca por uma loja falha.
+    """
+    def __init__(self, identifier: str) -> None:
+        super().__init__(f"Loja com identificador '{identifier}' não foi encontrada.")
+
+
+class CnpjLojaEmUsoException(DomainException):
+    """
+    Exceção lançada quando há tentativa de cadastrar CNPJ duplicado na tabela de lojas.
+    """
+    def __init__(self, cnpj: str) -> None:
+        self.cnpj = cnpj
+        super().__init__(f"O CNPJ '{cnpj}' já está cadastrado em outra loja no sistema.")
+

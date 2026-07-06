@@ -41,3 +41,17 @@ class UsuarioModel(HasTenant, Base):
     
     # Campo opcional para vincular à loja física (será configurado no futuro)
     loja_atribuida_id: Mapped[UUID | None] = mapped_column(nullable=True)
+
+
+class LojaModel(HasTenant, Base):
+    """
+    Representação física da tabela lojas (filiais do tenant).
+    """
+    __tablename__ = "lojas"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    nome: Mapped[str] = mapped_column(String(100), nullable=False)
+    cnpj: Mapped[str] = mapped_column(String(14), unique=True, nullable=False)
+    endereco: Mapped[str] = mapped_column(String(255), nullable=False)
+    ativo: Mapped[bool] = mapped_column(default=True, nullable=False)
+

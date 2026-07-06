@@ -33,11 +33,16 @@ SessionLocal = sessionmaker(
 def get_db() -> Generator[Session, None, None]:
     """
     Dependency do FastAPI para obter a sessão do banco de dados.
-    Garante que a conexão seja fechada de forma limpa ao final da requisição.
+    Garante que a transação seja comitada se a requisição ocorrer sem erros,
+    ou desfeita (rollback) em caso de exceções, fechando a conexão limpa ao final.
     """
     db = SessionLocal()
     try:
         yield db
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 

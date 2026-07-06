@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.infrastructure.web.auth import router as auth_router
+from src.infrastructure.web.lojas import router as lojas_router
 
 app = FastAPI(
     title="Gerenciador de Lojas SaaS - API",
@@ -11,6 +12,7 @@ app = FastAPI(
 
 # Registra os roteadores da aplicação
 app.include_router(auth_router)
+app.include_router(lojas_router)
 
 
 # Configuração de CORS (ajustar para produção posteriormente)
