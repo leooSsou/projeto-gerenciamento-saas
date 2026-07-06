@@ -8,7 +8,7 @@ def test_fluxo_autenticacao_completo(client: TestClient):
     payload_registro = {
         "nome_fantasia": "Lojas Express",
         "razao_social": "Lojas Express S/A",
-        "cnpj": "99.999.999/0001-99",
+        "cnpj": "25.923.825/0001-09",
         "dono_nome": "Julio Cesar",
         "dono_email": "julio@express.com",
         "dono_senha": "senha_segura_123"
@@ -29,7 +29,7 @@ def test_fluxo_autenticacao_completo(client: TestClient):
     response_cnpj_duplicado = client.post("/auth/register", json={
         "nome_fantasia": "Outra Loja",
         "razao_social": "Outra Razao S/A",
-        "cnpj": "99.999.999/0001-99", # CNPJ idêntico
+        "cnpj": "25.923.825/0001-09", # CNPJ idêntico
         "dono_nome": "Carlos",
         "dono_email": "carlos@express.com",
         "dono_senha": "senha_segura_123"
@@ -41,7 +41,7 @@ def test_fluxo_autenticacao_completo(client: TestClient):
     response_email_duplicado = client.post("/auth/register", json={
         "nome_fantasia": "Outra Loja",
         "razao_social": "Outra Razao S/A",
-        "cnpj": "11.222.333/0001-44",
+        "cnpj": "05.292.609/0001-03",
         "dono_nome": "Julio Repetido",
         "dono_email": "julio@express.com", # E-mail idêntico
         "dono_senha": "senha_segura_123"

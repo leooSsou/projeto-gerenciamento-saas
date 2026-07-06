@@ -41,3 +41,6 @@ class BcryptServicoCriptografia(ServicoCriptografia):
     def verificar_senha(self, senha_plana: str, senha_hash: str) -> bool:
         return verificar_senha(senha_plana, senha_hash)
 
+    def gerar_hash(self, senha_plana: str) -> str:
+        return gerar_hash_senha(senha_plana)
+

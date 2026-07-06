@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from src.infrastructure.database.session import get_db
-from src.infrastructure.security.password import gerar_hash_senha, BcryptServicoCriptografia
+from src.infrastructure.security.password import BcryptServicoCriptografia
 from src.infrastructure.security.jwt_handler import criar_token_acesso
-from src.infrastructure.database.repositories_adapters import (
-    SQLAlchemyTenantRepository,
-    SQLAlchemyUsuarioRepository,
+from src.infrastructure.database.repositorios_concrete import (
+    RepositorioTenantSQLAlchemy,
+    RepositorioUsuarioSQLAlchemy,
 )
 from src.use_cases.autenticacao.criar_tenant import CriarTenant, CriarTenantInput
 from src.use_cases.autenticacao.autenticar_usuario import AutenticarUsuario, AutenticarUsuarioInput
@@ -35,12 +35,10 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)) -> Registe
     # Ignora o filtro de tenant para permitir o cadastro inicial do tenant e seu primeiro usuário
     db.info["ignore_tenant_filter"] = True
 
-    tenant_repo = SQLAlchemyTenantRepository(db)
-    usuario_repo = SQLAlchemyUsuarioRepository(db)
-    use_case = CriarTenant(tenant_repo, usuario_repo)
-
-    # Gera o hash da senha enviada
-    senha_hash = gerar_hash_senha(request.dono_senha)
+    tenant_repo = RepositorioTenantSQLAlchemy(db)
+    usuario_repo = RepositorioUsuarioSQLAlchemy(db)
+    servico_cripto = BcryptServicoCriptografia()
+    use_case = CriarTenant(tenant_repo, usuario_repo, servico_cripto)
 
     input_data = CriarTenantInput(
         nome_fantasia=request.nome_fantasia,
@@ -48,7 +46,7 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)) -> Registe
         cnpj=request.cnpj,
         dono_nome=request.dono_nome,
         dono_email=str(request.dono_email),
-        dono_senha_hash=senha_hash
+        dono_senha_plana=request.dono_senha
     )
 
     try:
@@ -84,9 +82,10 @@ def login(request: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
     # Ignora o filtro de tenant durante a autenticação para permitir a busca do usuário pelo e-mail
     db.info["ignore_tenant_filter"] = True
 
-    usuario_repo = SQLAlchemyUsuarioRepository(db)
+    tenant_repo = RepositorioTenantSQLAlchemy(db)
+    usuario_repo = RepositorioUsuarioSQLAlchemy(db)
     servico_cripto = BcryptServicoCriptografia()
-    use_case = AutenticarUsuario(usuario_repo, servico_cripto)
+    use_case = AutenticarUsuario(usuario_repo, tenant_repo, servico_cripto)
 
     input_data = AutenticarUsuarioInput(
         email=str(request.email),

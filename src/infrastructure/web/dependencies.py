@@ -5,7 +5,7 @@ from uuid import UUID
 
 from src.infrastructure.database.session import get_db
 from src.infrastructure.security.jwt_handler import decodificar_token_acesso
-from src.infrastructure.database.repositories_adapters import SQLAlchemyUsuarioRepository
+from src.infrastructure.database.repositorios_concrete import RepositorioUsuarioSQLAlchemy
 from src.domain.entities.usuario import Usuario
 
 # Configura o fluxo de token Bearer do OAuth2 (aponta para a rota de login)
@@ -54,7 +54,7 @@ def get_current_user(
     # Configura o tenant_id ativo na sessão atual para a query e para futuras operações
     db.info["tenant_id"] = tenant_id
 
-    usuario_repo = SQLAlchemyUsuarioRepository(db)
+    usuario_repo = RepositorioUsuarioSQLAlchemy(db)
     usuario = usuario_repo.obter_por_id(usuario_id)
 
     if not usuario:

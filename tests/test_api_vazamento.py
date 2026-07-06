@@ -12,7 +12,7 @@ def test_isolamento_leitura_api_multi_tenant(client: TestClient):
     res_a = client.post("/auth/register", json={
         "nome_fantasia": "Tenant A",
         "razao_social": "Tenant A Ltda",
-        "cnpj": "11.111.111/0001-11",
+        "cnpj": "25.923.825/0001-09",
         "dono_nome": "Dono A",
         "dono_email": "donoa@email.com",
         "dono_senha": "senha_segura_a"
@@ -25,7 +25,7 @@ def test_isolamento_leitura_api_multi_tenant(client: TestClient):
     res_b = client.post("/auth/register", json={
         "nome_fantasia": "Tenant B",
         "razao_social": "Tenant B Ltda",
-        "cnpj": "22.222.222/0002-22",
+        "cnpj": "05.292.609/0001-03",
         "dono_nome": "Dono B",
         "dono_email": "donob@email.com",
         "dono_senha": "senha_segura_b"
@@ -70,7 +70,7 @@ def test_isolamento_de_sessao_concorrente(client: TestClient):
     res_a = client.post("/auth/register", json={
         "nome_fantasia": "Empresa A",
         "razao_social": "Empresa A S/A",
-        "cnpj": "12.121.121/0001-12",
+        "cnpj": "67.827.595/0001-24",
         "dono_nome": "Admin A",
         "dono_email": "admina@email.com",
         "dono_senha": "senha_segura"
@@ -80,7 +80,7 @@ def test_isolamento_de_sessao_concorrente(client: TestClient):
     res_b = client.post("/auth/register", json={
         "nome_fantasia": "Empresa B",
         "razao_social": "Empresa B S/A",
-        "cnpj": "34.343.343/0001-34",
+        "cnpj": "19.808.022/0001-00",
         "dono_nome": "Admin B",
         "dono_email": "adminb@email.com",
         "dono_senha": "senha_segura"
@@ -111,7 +111,7 @@ def test_tentativa_de_bypass_tenant_id(client: TestClient):
     res_a = client.post("/auth/register", json={
         "nome_fantasia": "Loja Alfa",
         "razao_social": "Loja Alfa Ltda",
-        "cnpj": "55.555.555/0001-55",
+        "cnpj": "81.477.811/0001-80",
         "dono_nome": "Gerente Alfa",
         "dono_email": "alfa@email.com",
         "dono_senha": "senha_alfa"
@@ -121,7 +121,7 @@ def test_tentativa_de_bypass_tenant_id(client: TestClient):
     res_b = client.post("/auth/register", json={
         "nome_fantasia": "Loja Beta",
         "razao_social": "Loja Beta Ltda",
-        "cnpj": "77.777.777/0001-77",
+        "cnpj": "94.686.599/0001-02",
         "dono_nome": "Gerente Beta",
         "dono_email": "beta@email.com",
         "dono_senha": "senha_beta"
