@@ -1,0 +1,305 @@
+{
+	"info": {
+		"_postman_id": "848bb283-bc2a-436d-9b0d-ea8196e8cfc2",
+		"name": "Gerenciador Lojas SaaS API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Autenticação",
+			"item": [
+				{
+					"name": "1. Registrar Tenant e Dono",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome_fantasia\": \"Minha Rede Lojas\",\n    \"razao_social\": \"Minha Rede Lojas Ltda\",\n    \"cnpj\": \"69.199.034/0001-53\",\n    \"dono_nome\": \"Leonardo\",\n    \"dono_email\": \"leonardo@lojas.com\",\n    \"dono_senha\": \"senha_secreta_123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "Cadastra um novo inquilino (Tenant) e o primeiro usuário administrador (Dono) no banco de dados."
+					},
+					"response": []
+				},
+				{
+					"name": "2. Login e Obtenção do Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();",
+									"if (response.access_token) {",
+									"    pm.collectionVariables.set(\"token\", response.access_token);",
+									"    console.log(\"Token JWT extraído com sucesso e salvo em {{token}}!\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"leonardo@lojas.com\",\n    \"senha\": \"senha_secreta_123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Autentica as credenciais do usuário dono e salva o token JWT de acesso automaticamente na variável de coleção {{token}}."
+					},
+					"response": []
+				},
+				{
+					"name": "3. Perfil do Usuário Logado (Me)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
+						},
+						"description": "Retorna os detalhes do perfil do usuário atualmente autenticado a partir do token de acesso fornecido."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Gestão de Lojas",
+			"item": [
+				{
+					"name": "1. Cadastrar Nova Loja",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();",
+									"if (response.id) {",
+									"    pm.collectionVariables.set(\"loja_id\", response.id);",
+									"    console.log(\"ID da Loja cadastrada salvo na variável {{loja_id}}!\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Filial Shopping\",\n    \"cnpj\": \"70.237.989/0001-37\",\n    \"endereco\": \"Av. Principal, 1000 - Loja 15\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/lojas/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"lojas",
+								""
+							]
+						},
+						"description": "Cria uma nova filial (Loja) vinculada ao Tenant do usuário atual."
+					},
+					"response": []
+				},
+				{
+					"name": "2. Listar Todas as Lojas",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/lojas/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"lojas",
+								""
+							]
+						},
+						"description": "Lista todas as lojas filiais cadastradas no Tenant ativo."
+					},
+					"response": []
+				},
+				{
+					"name": "3. Obter Loja por ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/lojas/{{loja_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"lojas",
+								"{{loja_id}}"
+							]
+						},
+						"description": "Retorna os detalhes de uma loja específica utilizando o ID salvo na variável {{loja_id}}."
+					},
+					"response": []
+				},
+				{
+					"name": "4. Atualizar Loja",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Filial Shopping (Reformada)\",\n    \"endereco\": \"Av. Principal, 1000 - Loja 15 e 16\",\n    \"ativo\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/lojas/{{loja_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"lojas",
+								"{{loja_id}}"
+							]
+						},
+						"description": "Atualiza os campos nome, endereco ou status ativo de uma loja mantendo o CNPJ imutável."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "loja_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

@@ -63,35 +63,35 @@ gantt
 ##### 👤 Jonathas (Regras de Negócio e Domínio)
 * **Atividades Independentes**:
   - [x] **[Urgência: Alta]** Criar entidade de domínio pura de `Loja` e contrato abstrato de seu repositório em [src/domain/](src/domain/).
-  - [ ] **[Urgência: Alta]** Criar entidade de domínio pura de `Produto` e contrato abstrato de seu repositório em [src/domain/](src/domain/).
-  - [ ] **[Urgência: Média]** Criar entidades de domínio puras (`Cliente`, `Fornecedor`) e contratos abstratos de seus repositórios em [src/domain/](src/domain/).
-  - [ ] **[Urgência: Média]** Implementar a regra de negócio do cálculo de precificação inteligente sugerida por **Markup** no domínio.
+  - [x] **[Urgência: Alta]** Criar entidade de domínio pura de `Produto` e contrato abstrato de seu repositório em [src/domain/](src/domain/).
+  - [x] **[Urgência: Média]** Criar entidades de domínio puras (`Cliente`, `Fornecedor`) e contratos abstratos de seus repositórios em [src/domain/](src/domain/).
+  - [x] **[Urgência: Média]** Implementar a regra de negócio do cálculo de precificação inteligente sugerida por **Markup** no domínio.
 * **Atividades Dependentes**:
   - [x] **[Urgência: Alta]** Implementar os casos de uso purificados em Python para gerenciamento (CRUD) de Lojas (concluído).
-  - [ ] **[Urgência: Alta]** Implementar os casos de uso purificados em Python para gerenciamento (CRUD) de Produtos.
-  - [ ] **[Urgência: Média]** Implementar os casos de uso purificados em Python para gerenciamento de Clientes e Fornecedores.
+  - [x] **[Urgência: Alta]** Implementar os casos de uso purificados em Python para gerenciamento (CRUD) de Produtos.
+  - [x] **[Urgência: Média]** Implementar os casos de uso purificados em Python para gerenciamento de Clientes e Fornecedores.
 
 ##### 👤 Leonardo (Persistência, Web e Testes)
 * **Atividades Independentes**:
   - [x] **[Urgência: Alta]** Desenvolver os schemas do Pydantic para validação de entrada/saída de Lojas em `src/infrastructure/web/schemas.py`.
-  - [ ] **[Urgência: Alta]** Desenvolver os schemas do Pydantic para validação de entrada/saída de Produtos em `src/infrastructure/web/schemas.py`.
-  - [ ] **[Urgência: Média]** Desenvolver os schemas do Pydantic para validação de entrada/saída de Clientes e Fornecedores.
+  - [x] **[Urgência: Alta]** Desenvolver os schemas do Pydantic para validação de entrada/saída de Produtos em `src/infrastructure/web/schemas.py`.
+  - [x] **[Urgência: Média]** Desenvolver os schemas do Pydantic para validação de entrada/saída de Clientes e Fornecedores.
 * **Atividades Dependentes**:
   - [x] **[Urgência: Alta]** Mapear o modelo SQLAlchemy físico de `lojas` em `models.py`.
-  - [ ] **[Urgência: Alta]** Mapear o modelo SQLAlchemy físico de `produtos` em `models.py`.
+  - [x] **[Urgência: Alta]** Mapear o modelo SQLAlchemy físico de `produtos` em `models.py`.
   - [x] **[Urgência: Alta]** Gerar e aplicar a migração do Alembic para a tabela `lojas`.
-  - [ ] **[Urgência: Alta]** Gerar e aplicar a migração do Alembic para a tabela `produtos`.
+  - [x] **[Urgência: Alta]** Gerar e aplicar a migração do Alembic para a tabela `produtos`.
   - [x] **[Urgência: Alta]** Implementar repositório SQLAlchemy concreto para Lojas.
-  - [ ] **[Urgência: Alta]** Implementar repositório SQLAlchemy concreto para Produtos.
+  - [x] **[Urgência: Alta]** Implementar repositório SQLAlchemy concreto para Produtos.
   - [x] **[Urgência: Alta]** Desenvolver as rotas web do FastAPI de CRUD para Lojas.
-  - [ ] **[Urgência: Alta]** Desenvolver as rotas web do FastAPI de CRUD para Produtos.
+  - [x] **[Urgência: Alta]** Desenvolver as rotas web do FastAPI de CRUD para Produtos.
   - [x] **[Urgência: Alta]** Escrever testes de schemas, repositórios e rotas de API para Lojas (com cobertura multi-tenant e isolamento).
-  - [ ] **[Urgência: Alta]** Escrever testes de schemas, repositórios e rotas de API para Produtos (com cobertura multi-tenant e isolamento).
-  - [ ] **[Urgência: Média]** Mapear os modelos SQLAlchemy físicos de `clientes` e `fornecedores`.
-  - [ ] **[Urgência: Média]** Gerar e aplicar a migração do Alembic para as tabelas `clientes` e `fornecedores`.
-  - [ ] **[Urgência: Média]** Implementar repositórios SQLAlchemy concretos para Clientes e Fornecedores (depende das interfaces abstratas de repositório criadas por Jonathas).
-  - [ ] **[Urgência: Média]** Desenvolver as rotas web do FastAPI de CRUD para Clientes e Fornecedores (depende dos repositórios de Leonardo e casos de uso de Jonathas).
-  - [ ] **[Urgência: Média]** Escrever testes de integração de API para Clientes/Fornecedores (depende das rotas FastAPI e inclui validação de limite de crédito).
+  - [x] **[Urgência: Alta]** Escrever testes de schemas, repositórios e rotas de API para Produtos (com cobertura multi-tenant e isolamento).
+  - [x] **[Urgência: Média]** Mapear os modelos SQLAlchemy físicos de `clientes` e `fornecedores`.
+  - [x] **[Urgência: Média]** Gerar e aplicar a migração do Alembic para as tabelas `clientes` e `fornecedores`.
+  - [x] **[Urgência: Média]** Implementar repositórios SQLAlchemy concretos para Clientes e Fornecedores (depende das interfaces abstratas de repositório criadas por Jonathas).
+  - [x] **[Urgência: Média]** Desenvolver as rotas web do FastAPI de CRUD para Clientes e Fornecedores (depende dos repositórios de Leonardo e casos de uso de Jonathas).
+  - [x] **[Urgência: Média]** Escrever testes de integração de API para Clientes/Fornecedores (depende das rotas FastAPI e inclui validação de limite de crédito).
 
 ---
 

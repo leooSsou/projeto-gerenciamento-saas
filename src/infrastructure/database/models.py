@@ -1,6 +1,6 @@
 from uuid import UUID, uuid4
 from datetime import datetime
-from sqlalchemy import String, DateTime, text
+from sqlalchemy import String, DateTime, text, Float, Boolean, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from src.infrastructure.database.mixins import HasTenant
@@ -54,4 +54,57 @@ class LojaModel(HasTenant, Base):
     cnpj: Mapped[str] = mapped_column(String(14), unique=True, nullable=False)
     endereco: Mapped[str] = mapped_column(String(255), nullable=False)
     ativo: Mapped[bool] = mapped_column(default=True, nullable=False)
+
+
+class ProdutoModel(HasTenant, Base):
+    """
+    Representação física da tabela produtos (catálogo de produtos).
+    """
+    __tablename__ = "produtos"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    nome: Mapped[str] = mapped_column(String(150), nullable=False)
+    sku: Mapped[str] = mapped_column(String(50), nullable=False)
+    preco_custo: Mapped[float] = mapped_column(Float, nullable=False)
+    preco_venda: Mapped[float] = mapped_column(Float, nullable=False)
+    markup: Mapped[float] = mapped_column(Float, nullable=False)
+    ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("sku", "tenant_id", name="uq_produtos_sku_tenant"),
+    )
+
+
+class ClienteModel(HasTenant, Base):
+    """
+    Representação física da tabela clientes.
+    """
+    __tablename__ = "clientes"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    nome: Mapped[str] = mapped_column(String(100), nullable=False)
+    email: Mapped[str] = mapped_column(String(100), nullable=False)
+    documento: Mapped[str] = mapped_column(String(14), nullable=False)
+    ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("documento", "tenant_id", name="uq_clientes_documento_tenant"),
+    )
+
+
+class FornecedorModel(HasTenant, Base):
+    """
+    Representação física da tabela fornecedores.
+    """
+    __tablename__ = "fornecedores"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    nome_fantasia: Mapped[str] = mapped_column(String(100), nullable=False)
+    razao_social: Mapped[str] = mapped_column(String(100), nullable=False)
+    cnpj: Mapped[str] = mapped_column(String(14), nullable=False)
+    ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("cnpj", "tenant_id", name="uq_fornecedores_cnpj_tenant"),
+    )
 

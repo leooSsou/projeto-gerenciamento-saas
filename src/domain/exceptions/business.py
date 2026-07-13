@@ -63,3 +63,55 @@ class CnpjLojaEmUsoException(DomainException):
         self.cnpj = cnpj
         super().__init__(f"O CNPJ '{cnpj}' já está cadastrado em outra loja no sistema.")
 
+
+class ProdutoNaoEncontradoException(DomainException):
+    """
+    Exceção lançada quando a busca por um produto falha.
+    """
+    def __init__(self, identifier: str) -> None:
+        super().__init__(f"Produto com identificador '{identifier}' não foi encontrado.")
+
+
+class SkuProdutoEmUsoException(DomainException):
+    """
+    Exceção lançada quando há tentativa de cadastrar SKU duplicado para o mesmo tenant.
+    """
+    def __init__(self, sku: str) -> None:
+        self.sku = sku
+        super().__init__(f"O SKU '{sku}' já está cadastrado em outro produto no sistema.")
+
+
+class ClienteNaoEncontradoException(DomainException):
+    """
+    Exceção lançada quando a busca por um cliente falha.
+    """
+    def __init__(self, identifier: str) -> None:
+        super().__init__(f"Cliente com identificador '{identifier}' não foi encontrado.")
+
+
+class DocumentoClienteEmUsoException(DomainException):
+    """
+    Exceção lançada quando há tentativa de cadastrar documento (CPF/CNPJ) duplicado para o mesmo tenant.
+    """
+    def __init__(self, documento: str) -> None:
+        self.documento = documento
+        super().__init__(f"O documento '{documento}' já está cadastrado em outro cliente no sistema.")
+
+
+class FornecedorNaoEncontradoException(DomainException):
+    """
+    Exceção lançada quando a busca por um fornecedor falha.
+    """
+    def __init__(self, identifier: str) -> None:
+        super().__init__(f"Fornecedor com identificador '{identifier}' não foi encontrado.")
+
+
+class CnpjFornecedorEmUsoException(DomainException):
+    """
+    Exceção lançada quando há tentativa de cadastrar CNPJ duplicado de fornecedor para o mesmo tenant.
+    """
+    def __init__(self, cnpj: str) -> None:
+        self.cnpj = cnpj
+        super().__init__(f"O CNPJ '{cnpj}' já está cadastrado em outro fornecedor no sistema.")
+
+
