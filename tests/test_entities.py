@@ -2,6 +2,7 @@ import pytest
 from uuid import uuid4
 from src.domain.entities.tenant import Tenant
 from src.domain.entities.usuario import Usuario
+from src.domain.entities.loja import Loja
 
 def test_criar_tenant_valido():
     """
@@ -129,4 +130,59 @@ def test_criar_usuario_dono_com_loja():
             tenant_id=uuid4(),
             loja_atribuida_id=uuid4()  # DONO deve gerenciar o tenant todo, sem loja específica
         )
+
+def test_criar_loja_valida():
+    """
+    Garante que uma Loja com dados corretos seja instanciada com sucesso.
+    """
+    tenant_id = uuid4()
+    loja = Loja(
+        nome="Filial Centro",
+        cnpj="12.345.678/0001-95",
+        endereco="Av. Central, 100",
+        tenant_id=tenant_id
+    )
+    assert loja.nome == "Filial Centro"
+    assert loja.cnpj == "12345678000195"
+    assert loja.endereco == "Av. Central, 100"
+    assert loja.tenant_id == tenant_id
+    assert loja.id is not None
+    assert loja.ativo is True
+
+def test_criar_loja_cnpj_invalido():
+    """
+    Garante que criar uma Loja com CNPJ inválido levante ValueError.
+    """
+    with pytest.raises(ValueError, match="CNPJ inválido"):
+        Loja(
+            nome="Filial Centro",
+            cnpj="123",
+            endereco="Av. Central, 100",
+            tenant_id=uuid4()
+        )
+
+def test_criar_loja_nome_vazio():
+    """
+    Garante que criar uma Loja com nome vazio ou nulo levante ValueError.
+    """
+    with pytest.raises(ValueError, match="O nome da loja deve ser uma string não vazia"):
+        Loja(
+            nome="   ",
+            cnpj="12.345.678/0001-95",
+            endereco="Av. Central, 100",
+            tenant_id=uuid4()
+        )
+
+def test_criar_loja_endereco_vazio():
+    """
+    Garante que criar uma Loja com endereço vazio levante ValueError.
+    """
+    with pytest.raises(ValueError, match="O endereço deve ser uma string não vazia"):
+        Loja(
+            nome="Filial Centro",
+            cnpj="12.345.678/0001-95",
+            endereco="  ",
+            tenant_id=uuid4()
+        )
+
 

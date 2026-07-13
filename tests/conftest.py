@@ -1,10 +1,12 @@
 import os
+os.environ["TESTING"] = "True"
 from typing import Generator
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from dotenv import load_dotenv
+
 
 from src.infrastructure.web.main import app
 from src.infrastructure.database.session import get_db

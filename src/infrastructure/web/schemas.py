@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from uuid import UUID
 
 class RegisterRequest(BaseModel):
@@ -21,8 +21,7 @@ class RegisterResponse(BaseModel):
     dono_id: UUID
     dono_email: str
 
-    class ConfigDict:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class LoginRequest(BaseModel):
     """
@@ -49,5 +48,139 @@ class UserResponse(BaseModel):
     tenant_id: UUID
     loja_atribuida_id: UUID | None = None
 
-    class ConfigDict:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LojaCreateRequest(BaseModel):
+    """
+    Schema para requisição de criação de uma nova Loja.
+    """
+    nome: str = Field(..., min_length=1, max_length=100, description="Nome da filial/loja.")
+    cnpj: str = Field(..., min_length=14, max_length=18, description="CNPJ da filial/loja.")
+    endereco: str = Field(..., min_length=1, max_length=255, description="Endereço físico completo.")
+
+
+class LojaUpdateRequest(BaseModel):
+    """
+    Schema para requisição de atualização dos dados da Loja.
+    """
+    nome: str = Field(..., min_length=1, max_length=100, description="Nome da filial/loja.")
+    endereco: str = Field(..., min_length=1, max_length=255, description="Endereço físico completo.")
+    ativo: bool = Field(..., description="Status de atividade da loja.")
+
+
+class LojaResponse(BaseModel):
+    """
+    Schema para retorno das informações de uma Loja.
+    """
+    id: UUID
+    nome: str
+    cnpj: str
+    endereco: str
+    tenant_id: UUID
+    ativo: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProdutoCreateRequest(BaseModel):
+    """
+    Schema para requisição de criação de um novo Produto.
+    """
+    nome: str = Field(..., min_length=1, max_length=150, description="Nome do produto.")
+    sku: str = Field(..., min_length=1, max_length=50, description="SKU de identificação.")
+    preco_custo: float = Field(..., ge=0.0, description="Preço de custo.")
+    preco_venda: float = Field(..., ge=0.0, description="Preço de venda.")
+    markup: float = Field(..., description="Markup do produto.")
+
+
+class ProdutoUpdateRequest(BaseModel):
+    """
+    Schema para requisição de atualização dos dados de um Produto.
+    """
+    nome: str = Field(..., min_length=1, max_length=150, description="Nome do produto.")
+    preco_custo: float = Field(..., ge=0.0, description="Preço de custo.")
+    preco_venda: float = Field(..., ge=0.0, description="Preço de venda.")
+    markup: float = Field(..., description="Markup do produto.")
+    ativo: bool = Field(..., description="Status de atividade do produto.")
+
+
+class ProdutoResponse(BaseModel):
+    """
+    Schema para retorno das informações de um Produto.
+    """
+    id: UUID
+    nome: str
+    sku: str
+    preco_custo: float
+    preco_venda: float
+    markup: float
+    tenant_id: UUID
+    ativo: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ClienteCreateRequest(BaseModel):
+    """
+    Schema para requisição de criação de um novo Cliente.
+    """
+    nome: str = Field(..., min_length=1, max_length=100, description="Nome do cliente.")
+    email: EmailStr = Field(..., description="E-mail do cliente.")
+    documento: str = Field(..., min_length=11, max_length=18, description="CPF ou CNPJ do cliente.")
+
+
+class ClienteUpdateRequest(BaseModel):
+    """
+    Schema para requisição de atualização dos dados de um Cliente.
+    """
+    nome: str = Field(..., min_length=1, max_length=100, description="Nome do cliente.")
+    email: EmailStr = Field(..., description="E-mail do cliente.")
+    ativo: bool = Field(..., description="Status de atividade do cliente.")
+
+
+class ClienteResponse(BaseModel):
+    """
+    Schema para retorno das informações de um Cliente.
+    """
+    id: UUID
+    nome: str
+    email: str
+    documento: str
+    tenant_id: UUID
+    ativo: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FornecedorCreateRequest(BaseModel):
+    """
+    Schema para requisição de criação de um novo Fornecedor.
+    """
+    nome_fantasia: str = Field(..., min_length=1, max_length=100, description="Nome fantasia.")
+    razao_social: str = Field(..., min_length=1, max_length=100, description="Razão social.")
+    cnpj: str = Field(..., min_length=14, max_length=18, description="CNPJ do fornecedor.")
+
+
+class FornecedorUpdateRequest(BaseModel):
+    """
+    Schema para requisição de atualização dos dados de um Fornecedor.
+    """
+    nome_fantasia: str = Field(..., min_length=1, max_length=100, description="Nome fantasia.")
+    razao_social: str = Field(..., min_length=1, max_length=100, description="Razão social.")
+    ativo: bool = Field(..., description="Status de atividade do fornecedor.")
+
+
+class FornecedorResponse(BaseModel):
+    """
+    Schema para retorno das informações de um Fornecedor.
+    """
+    id: UUID
+    nome_fantasia: str
+    razao_social: str
+    cnpj: str
+    tenant_id: UUID
+    ativo: bool
+
+    model_config = ConfigDict(from_attributes=True)
+

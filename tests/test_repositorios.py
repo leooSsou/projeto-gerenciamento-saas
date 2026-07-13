@@ -2,10 +2,12 @@ import pytest
 from sqlalchemy.orm import Session
 from src.domain.entities.tenant import Tenant
 from src.domain.entities.usuario import Usuario
+from src.domain.entities.loja import Loja
 from src.infrastructure.database.models import UsuarioModel
 from src.infrastructure.database.repositorios_concrete import (
     RepositorioTenantSQLAlchemy,
     RepositorioUsuarioSQLAlchemy,
+    RepositorioLojaSQLAlchemy,
 )
 
 def test_persistir_tenant_e_usuario(db_session: Session) -> None:
@@ -91,3 +93,54 @@ def test_bloqueio_de_vazamento_sem_tenant_id(db_session: Session) -> None:
     # Tenta fazer uma consulta a UsuarioModel (que herda de HasTenant)
     with pytest.raises(ValueError, match="Acesso ao banco de dados bloqueado: tenant_id não configurado na sessão."):
         db_session.query(UsuarioModel).all()
+
+
+def test_persistir_e_filtrar_loja(db_session: Session) -> None:
+    """
+    Testa se conseguimos salvar, obter e listar lojas usando o repositório concreto com isolamento de tenant.
+    """
+    db_session.info["ignore_tenant_filter"] = True
+    repo_tenant = RepositorioTenantSQLAlchemy(db_session)
+    
+    tenant_a = repo_tenant.salvar(Tenant(nome_fantasia="Empresa A", razao_social="Empresa A S/A", cnpj="26.762.981/0001-06"))
+    tenant_b = repo_tenant.salvar(Tenant(nome_fantasia="Empresa B", razao_social="Empresa B S/A", cnpj="96.453.427/0001-14"))
+    
+    db_session.commit()
+    db_session.info["ignore_tenant_filter"] = False
+    
+    repo_loja = RepositorioLojaSQLAlchemy(db_session)
+    
+    # 1. Cria duas lojas para Tenant A
+    loja_a1 = Loja(nome="Loja A1", cnpj="02.188.445/0001-72", endereco="Av. A, 1", tenant_id=tenant_a.id)
+    loja_a2 = Loja(nome="Loja A2", cnpj="44.997.002/0001-72", endereco="Av. A, 2", tenant_id=tenant_a.id)
+    repo_loja.salvar(loja_a1)
+    repo_loja.salvar(loja_a2)
+    
+    # 2. Cria uma loja para Tenant B
+    loja_b1 = Loja(nome="Loja B1", cnpj="76.764.269/0001-06", endereco="Av. B, 1", tenant_id=tenant_b.id)
+    repo_loja.salvar(loja_b1)
+    
+    db_session.commit()
+    
+    # 3. Listagem sob contexto do Tenant A
+    db_session.info["tenant_id"] = tenant_a.id
+    lojas_a = repo_loja.listar_todas(tenant_a.id)
+    assert len(lojas_a) == 2
+    assert any(loja.nome == "Loja A1" for loja in lojas_a)
+    assert any(loja.nome == "Loja A2" for loja in lojas_a)
+    
+    # 4. Listagem sob contexto do Tenant B
+    db_session.info["tenant_id"] = tenant_b.id
+    lojas_b = repo_loja.listar_todas(tenant_b.id)
+    assert len(lojas_b) == 1
+    assert lojas_b[0].nome == "Loja B1"
+    
+    # 5. Obter loja individualmente respeitando tenant
+    loja_a1_obtida = repo_loja.obter_por_id(loja_a1.id, tenant_a.id)
+    assert loja_a1_obtida is not None
+    assert loja_a1_obtida.nome == "Loja A1"
+    
+    # Tentar obter loja do Tenant A com contexto do Tenant B deve retornar None devido ao filtro de tenant
+    loja_a1_com_b = repo_loja.obter_por_id(loja_a1.id, tenant_b.id)
+    assert loja_a1_com_b is None
+
