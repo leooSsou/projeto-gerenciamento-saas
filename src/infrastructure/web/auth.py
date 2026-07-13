@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
+from src.infrastructure.web.limiter import limiter
 
 from src.infrastructure.database.session import get_db
 from src.infrastructure.security.password import BcryptServicoCriptografia
@@ -28,7 +29,8 @@ from src.infrastructure.web.dependencies import get_current_user
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
 @router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
-def register(request: RegisterRequest, db: Session = Depends(get_db)) -> RegisterResponse:
+@limiter.limit("5/minute")
+def register(request: Request, data: RegisterRequest, db: Session = Depends(get_db)) -> RegisterResponse:
     """
     Registra um novo inquilino (Tenant) e cria o respectivo usuário administrador (DONO).
     """
@@ -42,12 +44,12 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)) -> Registe
         use_case = CriarTenant(tenant_repo, usuario_repo, servico_cripto)
 
         input_data = CriarTenantInput(
-            nome_fantasia=request.nome_fantasia,
-            razao_social=request.razao_social,
-            cnpj=request.cnpj,
-            dono_nome=request.dono_nome,
-            dono_email=str(request.dono_email),
-            dono_senha_plana=request.dono_senha
+            nome_fantasia=data.nome_fantasia,
+            razao_social=data.razao_social,
+            cnpj=data.cnpj,
+            dono_nome=data.dono_nome,
+            dono_email=str(data.dono_email),
+            dono_senha_plana=data.dono_senha
         )
 
         try:
@@ -78,7 +80,8 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)) -> Registe
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(request: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse:
+@limiter.limit("5/minute")
+def login(request: Request, data: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse:
     """
     Autentica um usuário e retorna um token de acesso JWT.
     """
@@ -92,8 +95,8 @@ def login(request: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
         use_case = AutenticarUsuario(usuario_repo, tenant_repo, servico_cripto)
 
         input_data = AutenticarUsuarioInput(
-            email=str(request.email),
-            senha_plana=request.senha
+            email=str(data.email),
+            senha_plana=data.senha
         )
 
         try:

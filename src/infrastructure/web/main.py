@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 
+from src.infrastructure.web.limiter import limiter
 from src.infrastructure.web.auth import router as auth_router
 from src.infrastructure.web.lojas import router as lojas_router
 from src.infrastructure.web.produtos import router as produtos_router
@@ -12,6 +15,11 @@ app = FastAPI(
     description="API de retaguarda multi-tenant para gerenciamento de lojas e estoque.",
     version="1.0.0",
 )
+
+# Configura o limiter na instância da aplicação
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 
 # Registra os roteadores da aplicação
 app.include_router(auth_router)
