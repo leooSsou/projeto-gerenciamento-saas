@@ -1,0 +1,71 @@
+RELATÓRIO DE CONCLUSÃO - ONDA 2 (CATÁLOGO CENTRALIZADO)
+
+Olá Jonathas, segue o relatório completo da implementação e consolidação da Onda 2 (integração das entidades de Produto, Cliente e Fornecedor). Todas as tarefas da branch de domínio e infraestrutura foram unificadas, implementadas, testadas e enviadas ao repositório remoto.
+
+---
+
+1. O QUE FOI DESENVOLVIDO E ENTREGUE
+
+* Camada de Domínio (Negócio e Validações)
+  - Entidade Produto (src/domain/entities/produto.py):
+    * Modelagem da classe Produto como dataclass congelada (frozen).
+    * Validações rígidas impedindo valores nulos, SKUs vazios ou preços/quantidades negativos.
+    * Implementação do método estático calcular_preco_venda(preco_custo, markup) para precificação inteligente.
+  - Entidade Cliente (src/domain/entities/cliente.py):
+    * Modelagem da classe Cliente.
+    * Validação matemática de CPF e CNPJ com limpeza automática de caracteres não numéricos.
+    * Validação de formato de e-mail.
+  - Entidade Fornecedor (src/domain/entities/fornecedor.py):
+    * Modelagem da classe Fornecedor.
+    * Validação matemática de CNPJ.
+  - Interfaces / Contratos dos Repositórios (src/domain/repositories/):
+    * Definição formal das interfaces de consulta e persistência: ProdutoRepository, ClienteRepository e FornecedorRepository.
+  - Exceções de Domínio (src/domain/exceptions/business.py):
+    * Registro de exceções de negócio como ProdutoNaoEncontradoException, SkuProdutoEmUsoException, DocumentoClienteEmUsoException e CnpjFornecedorEmUsoException.
+
+* Camada de Persistência e Banco de Dados (SQLAlchemy & Alembic)
+  - Modelos Físicos (src/infrastructure/database/models.py):
+    * Declaração de ProdutoModel, ClienteModel e FornecedorModel herdando de HasTenant para suporte completo ao isolamento global de dados.
+    * Criação de UniqueConstraint compostos (sku + tenant_id, documento + tenant_id, cnpj + tenant_id) para garantir unicidade sem limitar registros equivalentes entre diferentes inquilinos.
+  - Migração do Banco:
+    * Gerada e aplicada com sucesso a revisão de migração Alembic "510cf29436c0" criando as tabelas físicas correspondentes no PostgreSQL.
+  - Repositórios Concretos (src/infrastructure/database/repositorios_concrete.py):
+    * Desenvolvimento das classes RepositorioProdutoSQLAlchemy, RepositorioClienteSQLAlchemy e RepositorioFornecedorSQLAlchemy, implementando o padrão de mapeamento bidirecional (Model <-> Entity).
+
+* Camada de Casos de Uso (Aplicação)
+  - Produto (src/use_cases/catalogo/gerenciar_produto.py): CRUD completo (CriarProduto, ObterProduto, ListarProdutos, AtualizarProduto) integrando a consistência de SKU por tenant.
+  - Cliente (src/use_cases/catalogo/gerenciar_cliente.py): CRUD completo garantindo a unicidade de documento.
+  - Fornecedor (src/use_cases/catalogo/gerenciar_fornecedor.py): CRUD completo com unicidade de CNPJ.
+
+* Interface Web (API FastAPI)
+  - Schemas Pydantic (src/infrastructure/web/schemas.py): Criação de schemas de request e response com regras de tamanho de string, tipagem e limites de valores.
+  - Roteadores e Endpoints (src/infrastructure/web/):
+    * Criadas as rotas /produtos/, /clientes/ e /fornecedores/ com segurança JWT injetada via get_current_user para obtenção automática e isolada do tenant_id.
+    * Registro no arquivo central do app FastAPI (src/infrastructure/web/main.py).
+
+---
+
+2. QUALIDADE, SEGURANÇA E COBERTURA DE TESTES
+
+Desenvolvemos uma suíte de testes rigorosa para blindar a aplicação contra falhas e vulnerabilidades de dados:
+* test_vulnerabilidade_catalogo.py:
+  - Contém 5 testes dedicados a validar o isolamento de inquilinos (impedindo que o Tenant A leia, atualize ou delete dados de Produtos, Clientes ou Fornecedores do Tenant B), injeção maliciosa de tenant_id e validações de domínio (CNPJ inválido, preços negativos).
+* test_api_produtos.py & test_api_clientes_fornecedores.py:
+  - Testes de integração cobrindo fluxos de CRUD de ponta a ponta.
+
+RESULTADO DOS TESTES AUTOMATIZADOS:
+Executamos a suíte de testes inteira no contêiner do Docker e obtivemos 100% de sucesso (todas as 58 rotinas/testes passando com sucesso).
+
+---
+
+3. DEPENDÊNCIAS E PRÓXIMOS PASSOS (ONDA 3)
+
+* Há pendências da Onda 2 que dependiam do Leonardo?
+Não. Todas as dependências de infraestrutura, persistência física, endpoints e segurança foram totalmente sanadas. A camada de domínio originalmente planejada para ser construída de forma paralela já foi implementada e validada de ponta a ponta de forma coesa com a infraestrutura.
+
+* O que faremos na Onda 3?
+Agora estamos prontos para avançar para a "Onda 3: O Coração do Estoque (Ledger & Concorrência)". Tarefas mapeadas para iniciar:
+1. Modelagem Física de Saldo e Histórico: Criação das tabelas de saldos de estoque (estoque_saldos) e ledger de histórico (estoque_movimentacoes).
+2. Lógica de Concorrência e Bloqueio Pessimista: Implementação de SELECT FOR UPDATE para evitar inconsistências em vendas ou movimentações simultâneas de estoque.
+3. Casos de Uso de Estoque: Entrada de estoque simples e entrada automatizada via Upload e processamento (parsing) do XML de NF-e.
+4. Testes de Estresse de Concorrência: Simulação de concorrência com requisições assíncronas simultâneas.
