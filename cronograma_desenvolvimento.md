@@ -51,6 +51,7 @@ gantt
   * **Segurança, Web e Testes (Responsável: Douglas)**:
     - [x] Desenvolver utilitários de segurança: hashing de senhas com `bcrypt` e manipulação de tokens JWT em [src/infrastructure/security/](src/infrastructure/security/).
     - [x] Desenvolver as rotas web do FastAPI (`/auth/register`, `/auth/login`) e a dependência de injeção `get_current_user` em [src/infrastructure/web/](src/infrastructure/web/).
+    - [x] Implementar controle de taxa (Rate Limiting com SlowAPI e Redis) nos endpoints de autenticação e desenvolver testes de estresse DDoS correspondentes.
     - [x] Escrever a suíte de testes automatizados de integração e de simulação de vazamento multi-tenant (*SaaS leakage*) em [tests/](tests/).
 
 ---
