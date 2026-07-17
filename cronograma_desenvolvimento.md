@@ -99,11 +99,29 @@ gantt
 ### 🩸 Onda 3: O Coração do Estoque (Ledger & Concorrência)
 *Objetivo: Construir a lógica de inventário blindada contra concorrência e falhas de quantidade física.*
 
-- [ ] Criação da tabela de saldos (`estoque_saldos`) e ledger de histórico (`estoque_movimentacoes`).
-- [ ] Caso de uso: Entrada de estoque simples e controle de saldo.
-- [ ] Implementação do **Bloqueio Pessimista (`SELECT FOR UPDATE`)** nas transações de estoque.
-- [ ] Caso de uso: Entrada rápida de estoque através do **Upload e parsing de XML de NF-e**.
-- [ ] Testes de concorrência: simulação de requisições simultâneas forçando condições de corrida.
+#### 👥 Divisão de Atividades por Responsável
+
+##### 👤 Jonathas (Regras de Negócio e Domínio)
+* **Atividades Independentes**:
+  - [ ] **[Urgência: Alta]** Criar entidades de domínio puras (`EstoqueSaldo` e `EstoqueMovimentacao`) e contratos abstratos de seus repositórios em [src/domain/](src/domain/).
+  - [ ] **[Urgência: Alta]** Adicionar os campos opcionais `codigo_barras` e `fornecedor_id` na entidade de domínio `Produto` em [src/domain/entities/produto.py](src/domain/entities/produto.py).
+  - [ ] **[Urgência: Alta]** Criar a exceção de negócio customizada `EstoqueInsuficienteException` em [src/domain/exceptions/business.py](src/domain/exceptions/business.py).
+* **Atividades Dependentes**:
+  - [ ] **[Urgência: Alta]** Implementar o caso de uso purificado `RegistrarMovimentacaoEstoque` (Entrada/Saída de estoque simples e controle de saldo).
+  - [ ] **[Urgência: Alta]** Implementar o caso de uso purificado `ImportarEstoqueNFe` (parsing de XML de NF-e, busca/criação de fornecedor, atualização de custo médio ponderado e markup).
+
+##### 👤 Leonardo (Persistência, Web e Testes)
+* **Atividades Independentes**:
+  - [ ] **[Urgência: Alta]** Desenvolver os schemas do Pydantic para validação de entrada/saída de movimentações de estoque e importação de NF-e em `src/infrastructure/web/schemas.py`.
+* **Atividades Dependentes**:
+  - [ ] **[Urgência: Alta]** Mapear os modelos SQLAlchemy físicos `EstoqueSaldoModel` e `EstoqueMovimentacaoModel` em `models.py`.
+  - [ ] **[Urgência: Alta]** Adicionar as colunas `codigo_barras` e `fornecedor_id` no modelo físico `ProdutoModel` em `models.py`.
+  - [ ] **[Urgência: Alta]** Gerar e aplicar a migração do Alembic para as novas tabelas e colunas.
+  - [ ] **[Urgência: Alta]** Implementar repositórios SQLAlchemy concretos para `EstoqueSaldo` e `EstoqueMovimentacao`.
+  - [ ] **[Urgência: Alta]** Implementar o método de busca de saldo por filial com lock (`SELECT FOR UPDATE`) no repositório de saldos usando `.with_for_update()`.
+  - [ ] **[Urgência: Alta]** Desenvolver as rotas web do FastAPI para movimentação de estoque manual e importação de XML de NF-e.
+  - [ ] **[Urgência: Alta]** Escrever testes de integração para o ledger de estoque e de isolamento multi-tenant (*SaaS leakage*).
+  - [ ] **[Urgência: Alta]** Escrever testes físicos de concorrência e condições de corrida (simulando requisições paralelas simultâneas forçando o bloqueio pessimista).
 
 ---
 
