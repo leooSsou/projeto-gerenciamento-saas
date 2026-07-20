@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import Optional, List
+
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from uuid import UUID
 
@@ -192,4 +193,27 @@ class FornecedorResponse(BaseModel):
     ativo: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ItemImportadoNFeResponse(BaseModel):
+    """
+    Schema para retorno de cada item processado no XML de NF-e.
+    """
+    produto: ProdutoResponse
+    quantidade_importada: float
+    valor_unitario_nfe: float
+    novo_produto_cadastrado: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ImportarNFeResponse(BaseModel):
+    """
+    Schema para resposta consolidada da importação de NF-e.
+    """
+    fornecedor: FornecedorResponse
+    itens_processados: List[ItemImportadoNFeResponse]
+
+    model_config = ConfigDict(from_attributes=True)
+
 
