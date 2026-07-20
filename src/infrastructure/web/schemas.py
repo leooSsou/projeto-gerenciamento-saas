@@ -1,5 +1,7 @@
+from typing import Optional
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from uuid import UUID
+
 
 class RegisterRequest(BaseModel):
     """
@@ -92,6 +94,8 @@ class ProdutoCreateRequest(BaseModel):
     preco_custo: float = Field(..., ge=0.0, description="Preço de custo.")
     preco_venda: float = Field(..., ge=0.0, description="Preço de venda.")
     markup: float = Field(..., description="Markup do produto.")
+    codigo_barras: Optional[str] = Field(None, max_length=50, description="Código de barras do produto.")
+    fornecedor_id: Optional[UUID] = Field(None, description="ID do fornecedor associado.")
 
 
 class ProdutoUpdateRequest(BaseModel):
@@ -102,6 +106,8 @@ class ProdutoUpdateRequest(BaseModel):
     preco_custo: float = Field(..., ge=0.0, description="Preço de custo.")
     preco_venda: float = Field(..., ge=0.0, description="Preço de venda.")
     markup: float = Field(..., description="Markup do produto.")
+    codigo_barras: Optional[str] = Field(None, max_length=50, description="Código de barras do produto.")
+    fornecedor_id: Optional[UUID] = Field(None, description="ID do fornecedor associado.")
     ativo: bool = Field(..., description="Status de atividade do produto.")
 
 
@@ -116,9 +122,12 @@ class ProdutoResponse(BaseModel):
     preco_venda: float
     markup: float
     tenant_id: UUID
+    codigo_barras: Optional[str] = None
+    fornecedor_id: Optional[UUID] = None
     ativo: bool
 
     model_config = ConfigDict(from_attributes=True)
+
 
 
 class ClienteCreateRequest(BaseModel):

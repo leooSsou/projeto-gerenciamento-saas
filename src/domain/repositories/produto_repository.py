@@ -31,8 +31,16 @@ class ProdutoRepository(ABC):
         pass
 
     @abstractmethod
+    def obter_por_codigo_barras(self, codigo_barras: str, tenant_id: UUID) -> Optional[Produto]:
+        """
+        Busca um Produto cadastrado pelo código de barras e tenant_id.
+        """
+        pass
+
+    @abstractmethod
     def listar_todos(self, tenant_id: UUID) -> List[Produto]:
         """
         Lista todos os produtos cadastrados para um determinado Tenant.
         """
         pass
+
