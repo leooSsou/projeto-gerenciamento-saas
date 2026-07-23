@@ -1,6 +1,9 @@
+from typing import Optional, List
+
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from uuid import UUID
 from datetime import datetime
+
 
 class RegisterRequest(BaseModel):
     """
@@ -93,6 +96,8 @@ class ProdutoCreateRequest(BaseModel):
     preco_custo: float = Field(..., ge=0.0, description="Preço de custo.")
     preco_venda: float = Field(..., ge=0.0, description="Preço de venda.")
     markup: float = Field(..., description="Markup do produto.")
+    codigo_barras: Optional[str] = Field(None, max_length=50, description="Código de barras do produto.")
+    fornecedor_id: Optional[UUID] = Field(None, description="ID do fornecedor associado.")
 
 
 class ProdutoUpdateRequest(BaseModel):
@@ -103,6 +108,8 @@ class ProdutoUpdateRequest(BaseModel):
     preco_custo: float = Field(..., ge=0.0, description="Preço de custo.")
     preco_venda: float = Field(..., ge=0.0, description="Preço de venda.")
     markup: float = Field(..., description="Markup do produto.")
+    codigo_barras: Optional[str] = Field(None, max_length=50, description="Código de barras do produto.")
+    fornecedor_id: Optional[UUID] = Field(None, description="ID do fornecedor associado.")
     ativo: bool = Field(..., description="Status de atividade do produto.")
 
 
@@ -117,9 +124,12 @@ class ProdutoResponse(BaseModel):
     preco_venda: float
     markup: float
     tenant_id: UUID
+    codigo_barras: Optional[str] = None
+    fornecedor_id: Optional[UUID] = None
     ativo: bool
 
     model_config = ConfigDict(from_attributes=True)
+
 
 
 class ClienteCreateRequest(BaseModel):
@@ -236,3 +246,23 @@ class RegistroMovimentacaoEstoqueResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ItemImportadoNFeResponse(BaseModel):
+    """
+    Schema para retorno de cada item processado no XML de NF-e.
+    """
+    produto: ProdutoResponse
+    quantidade_importada: float
+    valor_unitario_nfe: float
+    novo_produto_cadastrado: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ImportarNFeResponse(BaseModel):
+    """
+    Schema para resposta consolidada da importação de NF-e.
+    """
+    fornecedor: FornecedorResponse
+    itens_processados: List[ItemImportadoNFeResponse]
+
+    model_config = ConfigDict(from_attributes=True)

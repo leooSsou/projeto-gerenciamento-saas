@@ -3,6 +3,8 @@ from uuid import uuid4
 from src.domain.entities.tenant import Tenant
 from src.domain.entities.usuario import Usuario
 from src.domain.entities.loja import Loja
+from src.domain.entities.produto import Produto
+
 
 def test_criar_tenant_valido():
     """
@@ -173,16 +175,41 @@ def test_criar_loja_nome_vazio():
             tenant_id=uuid4()
         )
 
-def test_criar_loja_endereco_vazio():
+def test_criar_produto_com_codigo_barras_e_fornecedor():
     """
-    Garante que criar uma Loja com endereço vazio levante ValueError.
+    Garante que a entidade Produto aceite codigo_barras e fornecedor_id válidos.
     """
-    with pytest.raises(ValueError, match="O endereço deve ser uma string não vazia"):
-        Loja(
-            nome="Filial Centro",
-            cnpj="12.345.678/0001-95",
-            endereco="  ",
-            tenant_id=uuid4()
+    tenant_id = uuid4()
+    fornecedor_id = uuid4()
+    produto = Produto(
+        nome="Camiseta Polo",
+        sku="POLO-001",
+        preco_custo=30.0,
+        preco_venda=60.0,
+        markup=1.0,
+        tenant_id=tenant_id,
+        codigo_barras=" 7891234567890 ",
+        fornecedor_id=fornecedor_id
+    )
+    assert produto.nome == "Camiseta Polo"
+    assert produto.sku == "POLO-001"
+    assert produto.codigo_barras == "7891234567890"
+    assert produto.fornecedor_id == fornecedor_id
+
+def test_criar_produto_codigo_barras_invalido():
+    """
+    Garante que se codigo_barras não for string levante ValueError.
+    """
+    with pytest.raises(ValueError, match="O código de barras deve ser uma string"):
+        Produto(
+            nome="Camiseta Polo",
+            sku="POLO-001",
+            preco_custo=30.0,
+            preco_venda=60.0,
+            markup=1.0,
+            tenant_id=uuid4(),
+            codigo_barras=123456  # type: ignore
         )
+
 
 

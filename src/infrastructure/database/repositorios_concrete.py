@@ -260,6 +260,8 @@ class RepositorioProdutoSQLAlchemy(ProdutoRepository):
                 preco_custo=produto.preco_custo,
                 preco_venda=produto.preco_venda,
                 markup=produto.markup,
+                codigo_barras=produto.codigo_barras,
+                fornecedor_id=produto.fornecedor_id,
                 tenant_id=produto.tenant_id,
                 ativo=produto.ativo
             )
@@ -270,6 +272,8 @@ class RepositorioProdutoSQLAlchemy(ProdutoRepository):
             model.preco_custo = produto.preco_custo
             model.preco_venda = produto.preco_venda
             model.markup = produto.markup
+            model.codigo_barras = produto.codigo_barras
+            model.fornecedor_id = produto.fornecedor_id
             model.ativo = produto.ativo
             
         self.db.flush()
@@ -282,6 +286,8 @@ class RepositorioProdutoSQLAlchemy(ProdutoRepository):
             preco_venda=model.preco_venda,
             markup=model.markup,
             tenant_id=model.tenant_id,
+            codigo_barras=model.codigo_barras,
+            fornecedor_id=model.fornecedor_id,
             ativo=model.ativo
         )
 
@@ -298,6 +304,8 @@ class RepositorioProdutoSQLAlchemy(ProdutoRepository):
             preco_venda=model.preco_venda,
             markup=model.markup,
             tenant_id=model.tenant_id,
+            codigo_barras=model.codigo_barras,
+            fornecedor_id=model.fornecedor_id,
             ativo=model.ativo
         )
 
@@ -314,6 +322,26 @@ class RepositorioProdutoSQLAlchemy(ProdutoRepository):
             preco_venda=model.preco_venda,
             markup=model.markup,
             tenant_id=model.tenant_id,
+            codigo_barras=model.codigo_barras,
+            fornecedor_id=model.fornecedor_id,
+            ativo=model.ativo
+        )
+
+    def obter_por_codigo_barras(self, codigo_barras: str, tenant_id: UUID) -> Optional[Produto]:
+        self.db.info["tenant_id"] = tenant_id
+        model = self.db.query(ProdutoModel).filter(ProdutoModel.codigo_barras == codigo_barras.strip()).first()
+        if not model:
+            return None
+        return Produto(
+            id=model.id,
+            nome=model.nome,
+            sku=model.sku,
+            preco_custo=model.preco_custo,
+            preco_venda=model.preco_venda,
+            markup=model.markup,
+            tenant_id=model.tenant_id,
+            codigo_barras=model.codigo_barras,
+            fornecedor_id=model.fornecedor_id,
             ativo=model.ativo
         )
 
@@ -329,10 +357,13 @@ class RepositorioProdutoSQLAlchemy(ProdutoRepository):
                 preco_venda=m.preco_venda,
                 markup=m.markup,
                 tenant_id=m.tenant_id,
+                codigo_barras=m.codigo_barras,
+                fornecedor_id=m.fornecedor_id,
                 ativo=m.ativo
             )
             for m in models
         ]
+
 
 
 class RepositorioClienteSQLAlchemy(ClienteRepository):
