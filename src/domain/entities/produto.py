@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from uuid import UUID, uuid4
+from typing import Optional
 
 @dataclass(frozen=True)
 class Produto:
@@ -12,6 +13,8 @@ class Produto:
     preco_venda: float
     markup: float
     tenant_id: UUID
+    codigo_barras: Optional[str] = None
+    fornecedor_id: Optional[UUID] = None
     id: UUID = field(default_factory=uuid4)
     ativo: bool = True
 
@@ -36,8 +39,17 @@ class Produto:
         if not isinstance(self.tenant_id, UUID):
             raise ValueError("O tenant_id deve ser um UUID válido.")
 
+        if self.codigo_barras is not None:
+            if not isinstance(self.codigo_barras, str):
+                raise ValueError("O código de barras deve ser uma string.")
+            object.__setattr__(self, "codigo_barras", self.codigo_barras.strip())
+
+        if self.fornecedor_id is not None and not isinstance(self.fornecedor_id, UUID):
+            raise ValueError("O fornecedor_id deve ser um UUID válido.")
+
         if not isinstance(self.ativo, bool):
             raise ValueError("O campo ativo deve ser um booleano.")
+
 
     @staticmethod
     def calcular_preco_venda(preco_custo: float, markup: float) -> float:

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from uuid import UUID
-from typing import List
+from typing import List, Optional
 
 from src.domain.entities.produto import Produto
 from src.domain.repositories.produto_repository import ProdutoRepository
@@ -17,6 +17,8 @@ class CriarProdutoInput:
     preco_venda: float
     markup: float
     tenant_id: UUID
+    codigo_barras: Optional[str] = None
+    fornecedor_id: Optional[UUID] = None
 
 
 @dataclass(frozen=True)
@@ -44,7 +46,9 @@ class CriarProduto:
             preco_custo=input_data.preco_custo,
             preco_venda=input_data.preco_venda,
             markup=input_data.markup,
-            tenant_id=input_data.tenant_id
+            tenant_id=input_data.tenant_id,
+            codigo_barras=input_data.codigo_barras,
+            fornecedor_id=input_data.fornecedor_id
         )
 
         # 3. Salva no banco
@@ -99,6 +103,8 @@ class AtualizarProdutoInput:
     markup: float
     ativo: bool
     tenant_id: UUID
+    codigo_barras: Optional[str] = None
+    fornecedor_id: Optional[UUID] = None
 
 
 @dataclass(frozen=True)
@@ -127,6 +133,8 @@ class AtualizarProduto:
             preco_venda=input_data.preco_venda,
             markup=input_data.markup,
             tenant_id=produto.tenant_id,
+            codigo_barras=input_data.codigo_barras if input_data.codigo_barras is not None else produto.codigo_barras,
+            fornecedor_id=input_data.fornecedor_id if input_data.fornecedor_id is not None else produto.fornecedor_id,
             id=produto.id,
             ativo=input_data.ativo
         )
@@ -135,3 +143,4 @@ class AtualizarProduto:
         produto_salvo = self.produto_repo.salvar(produto_atualizado)
 
         return AtualizarProdutoOutput(produto=produto_salvo)
+

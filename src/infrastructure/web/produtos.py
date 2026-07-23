@@ -45,8 +45,11 @@ def criar_produto(
         preco_custo=request.preco_custo,
         preco_venda=request.preco_venda,
         markup=request.markup,
-        tenant_id=current_user.tenant_id
+        tenant_id=current_user.tenant_id,
+        codigo_barras=request.codigo_barras,
+        fornecedor_id=request.fornecedor_id
     )
+
     
     try:
         output = use_case.executar(input_data)
@@ -119,9 +122,12 @@ def atualizar_produto(
         preco_custo=request.preco_custo,
         preco_venda=request.preco_venda,
         markup=request.markup,
+        codigo_barras=request.codigo_barras,
+        fornecedor_id=request.fornecedor_id,
         ativo=request.ativo,
         tenant_id=current_user.tenant_id
     )
+
     
     try:
         output = use_case.executar(input_data)

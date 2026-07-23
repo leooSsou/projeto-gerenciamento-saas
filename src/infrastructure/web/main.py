@@ -9,6 +9,8 @@ from src.infrastructure.web.lojas import router as lojas_router
 from src.infrastructure.web.produtos import router as produtos_router
 from src.infrastructure.web.clientes import router as clientes_router
 from src.infrastructure.web.fornecedores import router as fornecedores_router
+from src.infrastructure.web.estoque import router as estoque_router
+from src.infrastructure.web.estoque_nfe import router as estoque_nfe_router
 
 app = FastAPI(
     title="Gerenciador de Lojas SaaS - API",
@@ -27,6 +29,9 @@ app.include_router(lojas_router)
 app.include_router(produtos_router)
 app.include_router(clientes_router)
 app.include_router(fornecedores_router)
+app.include_router(estoque_router)
+app.include_router(estoque_nfe_router)
+
 
 
 # Configuração de CORS (ajustar para produção posteriormente)

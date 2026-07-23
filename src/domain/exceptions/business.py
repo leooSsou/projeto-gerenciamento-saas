@@ -115,3 +115,19 @@ class CnpjFornecedorEmUsoException(DomainException):
         super().__init__(f"O CNPJ '{cnpj}' já está cadastrado em outro fornecedor no sistema.")
 
 
+class EstoqueInsuficienteException(DomainException):
+    """
+    Exceção lançada quando a quantidade em estoque é insuficiente para realizar uma saída.
+    """
+    def __init__(self, produto_id: str, loja_id: str, disponivel: int, solicitado: int) -> None:
+        self.produto_id = produto_id
+        self.loja_id = loja_id
+        self.disponivel = disponivel
+        self.solicitado = solicitado
+        super().__init__(
+            f"Estoque insuficiente para o produto '{produto_id}' na loja '{loja_id}'. "
+            f"Disponível: {disponivel}, Solicitado: {solicitado}."
+        )
+
+
+

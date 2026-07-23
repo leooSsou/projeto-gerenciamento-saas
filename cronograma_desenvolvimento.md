@@ -104,26 +104,27 @@ gantt
 ##### 👤 Leonardo (Frente 1: Ledger de Estoque & Controle de Concorrência - Fim a Fim)
 *Objetivo: Construir do banco à API a infraestrutura do motor de saldos, movimentação e travas concorrentes de estoque de forma autônoma.*
 * **Atividades**:
-  - [ ] **[Urgência: Alta]** Criar entidades de domínio puras (`EstoqueSaldo` e `EstoqueMovimentacao`) e contratos abstratos de seus repositórios em [src/domain/](src/domain/).
-  - [ ] **[Urgência: Alta]** Criar a exceção de negócio customizada `EstoqueInsuficienteException` em [src/domain/exceptions/business.py](src/domain/exceptions/business.py).
-  - [ ] **[Urgência: Alta]** Mapear os modelos SQLAlchemy físicos `EstoqueSaldoModel` e `EstoqueMovimentacaoModel` em `models.py`.
-  - [ ] **[Urgência: Alta]** Gerar e aplicar a migração do Alembic para a criação destas duas tabelas físicas no banco de dados.
-  - [ ] **[Urgência: Alta]** Implementar repositórios SQLAlchemy concretos para `EstoqueSaldo` e `EstoqueMovimentacao`, configurando a trava pessimista (`SELECT FOR UPDATE` via `.with_for_update()`).
-  - [ ] **[Urgência: Alta]** Implementar o caso de uso purificado `RegistrarMovimentacaoEstoque` (Entrada/Saída manual simples e validação de quantidade física).
-  - [ ] **[Urgência: Alta]** Desenvolver schemas Pydantic de entrada/saída para estoque em `src/infrastructure/web/schemas.py`.
-  - [ ] **[Urgência: Alta]** Desenvolver as rotas web do FastAPI de estoque (`POST /estoque/movimentar`, `GET /estoque/saldos` e `GET /estoque/movimentacoes`).
-  - [ ] **[Urgência: Alta]** Escrever suíte de testes de integração para o ledger de estoque, isolamento multi-tenant (*SaaS leakage*) e testes físicos de concorrência/condições de corrida (requisições simultâneas paralelas).
+  - [x] **[Urgência: Alta]** Criar entidades de domínio puras (`EstoqueSaldo` e `EstoqueMovimentacao`) e contratos abstratos de seus repositórios em [src/domain/](src/domain/).
+  - [x] **[Urgência: Alta]** Criar a exceção de negócio customizada `EstoqueInsuficienteException` em [src/domain/exceptions/business.py](src/domain/exceptions/business.py).
+  - [x] **[Urgência: Alta]** Mapear os modelos SQLAlchemy físicos `EstoqueSaldoModel` e `EstoqueMovimentacaoModel` em `models.py`.
+  - [x] **[Urgência: Alta]** Gerar e aplicar a migração do Alembic para a criação destas duas tabelas físicas no banco de dados.
+  - [x] **[Urgência: Alta]** Implementar repositórios SQLAlchemy concretos para `EstoqueSaldo` e `EstoqueMovimentacao`, configurando a trava pessimista (`SELECT FOR UPDATE` via `.with_for_update()`).
+  - [x] **[Urgência: Alta]** Implementar o caso de uso purificado `RegistrarMovimentacaoEstoque` (Entrada/Saída manual simples e validação de quantidade física).
+  - [x] **[Urgência: Alta]** Desenvolver schemas Pydantic de entrada/saída para estoque em `src/infrastructure/web/schemas.py`.
+  - [x] **[Urgência: Alta]** Desenvolver as rotas web do FastAPI de estoque (`POST /estoque/movimentar`, `GET /estoque/saldos` e `GET /estoque/movimentacoes`).
+  - [x] **[Urgência: Alta]** Escrever suíte de testes de integração para o ledger de estoque, isolamento multi-tenant (*SaaS leakage*) e testes físicos de concorrência/condições de corrida (requisições simultâneas paralelas).
 
 ##### 👤 Jonathas (Frente 2: Importação de NF-e & Precificação Inteligente - Fim a Fim)
 *Objetivo: Construir do banco à API o processador de XML de Nota Fiscal, auto-cadastro de fornecedores/produtos e custo médio ponderado.*
 * **Atividades**:
-  - [ ] **[Urgência: Alta]** Adicionar os campos opcionais `codigo_barras` e `fornecedor_id` na entidade de domínio `Produto` em [src/domain/entities/produto.py](src/domain/entities/produto.py) e no modelo SQLAlchemy `ProdutoModel` em `models.py`.
-  - [ ] **[Urgência: Alta]** Gerar e aplicar a migração Alembic para adicionar as colunas `codigo_barras` e `fornecedor_id` na tabela de `produtos`.
-  - [ ] **[Urgência: Alta]** Implementar o parser em Python para ler e extrair os dados de emitente (Fornecedor) e itens (Produtos) do XML de NF-e.
-  - [ ] **[Urgência: Alta]** Implementar o caso de uso `ImportarEstoqueNFe` (recupera ou cria fornecedor, atualiza custo médio ponderado global do produto, recalcula preço de venda com base no markup e cadastra novos produtos ausentes).
-  - [ ] **[Urgência: Alta]** Desenvolver schemas Pydantic para recebimento do upload de arquivo XML em `src/infrastructure/web/schemas.py`.
-  - [ ] **[Urgência: Alta]** Desenvolver a rota web do FastAPI para upload e processamento do XML (`POST /estoque/importar-xml`).
-  - [ ] **[Urgência: Alta]** Escrever testes de integração para o parser de XML de NF-e, testes de cálculo de custo médio ponderado e testes de integração com a criação automática de entidades.
+  - [x] **[Urgência: Alta]** Adicionar os campos opcionais `codigo_barras` e `fornecedor_id` na entidade de domínio `Produto` em [src/domain/entities/produto.py](src/domain/entities/produto.py) e no modelo SQLAlchemy `ProdutoModel` em `models.py`.
+  - [x] **[Urgência: Alta]** Gerar e aplicar a migração Alembic para adicionar as colunas `codigo_barras` e `fornecedor_id` na tabela de `produtos`.
+  - [x] **[Urgência: Alta]** Implementar o parser em Python para ler e extrair os dados de emitente (Fornecedor) e itens (Produtos) do XML de NF-e.
+  - [x] **[Urgência: Alta]** Implementar o caso de uso `ImportarEstoqueNFe` (recupera ou cria fornecedor, atualiza custo médio ponderado global do produto, recalcula preço de venda com base no markup e cadastra novos produtos ausentes).
+  - [x] **[Urgência: Alta]** Desenvolver schemas Pydantic para recebimento do upload de arquivo XML em `src/infrastructure/web/schemas.py`.
+  - [x] **[Urgência: Alta]** Desenvolver a rota web do FastAPI para upload e processamento do XML (`POST /estoque/importar-xml`).
+  - [x] **[Urgência: Alta]** Escrever testes de integração para o parser de XML de NF-e, testes de cálculo de custo médio ponderado e testes de integração com a criação automática de entidades.
+
 
 ---
 
