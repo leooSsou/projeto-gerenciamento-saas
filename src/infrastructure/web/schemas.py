@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from uuid import UUID
+from datetime import datetime
 
 class RegisterRequest(BaseModel):
     """
@@ -183,4 +184,55 @@ class FornecedorResponse(BaseModel):
     ativo: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MovimentacaoEstoqueRequest(BaseModel):
+    """
+    Schema para requisição de nova movimentação de estoque.
+    """
+    loja_id: UUID = Field(..., description="ID da loja física.")
+    produto_id: UUID = Field(..., description="ID do produto.")
+    tipo: str = Field(..., pattern="^(ENTRADA|SAIDA)$", description="Tipo de movimentação: ENTRADA ou SAIDA.")
+    quantidade: int = Field(..., gt=0, le=1000000, description="Quantidade a ser movimentada (máximo 1.000.000).")
+    motivo: str = Field(..., min_length=1, max_length=255, description="Motivo da movimentação.")
+
+
+class MovimentacaoEstoqueResponse(BaseModel):
+    """
+    Schema para retorno de uma movimentação registrada (ledger).
+    """
+    id: UUID
+    loja_id: UUID
+    produto_id: UUID
+    tipo: str
+    quantidade: int
+    motivo: str
+    tenant_id: UUID
+    data_movimentacao: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EstoqueSaldoResponse(BaseModel):
+    """
+    Schema para retorno del saldo consolidado de estoque.
+    """
+    id: UUID
+    loja_id: UUID
+    produto_id: UUID
+    quantidade: int
+    tenant_id: UUID
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RegistroMovimentacaoEstoqueResponse(BaseModel):
+    """
+    Schema para retorno de sucesso da movimentação com saldo atualizado e histórico registrado.
+    """
+    saldo: EstoqueSaldoResponse
+    movimentacao: MovimentacaoEstoqueResponse
+
+    model_config = ConfigDict(from_attributes=True)
+
 

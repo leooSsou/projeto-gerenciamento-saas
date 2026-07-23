@@ -7,12 +7,16 @@ from src.domain.repositories.loja_repository import LojaRepository
 from src.domain.repositories.produto_repository import ProdutoRepository
 from src.domain.repositories.cliente_repository import ClienteRepository
 from src.domain.repositories.fornecedor_repository import FornecedorRepository
+from src.domain.repositories.estoque_saldo_repository import EstoqueSaldoRepository
+from src.domain.repositories.estoque_movimentacao_repository import EstoqueMovimentacaoRepository
 from src.domain.entities.tenant import Tenant
 from src.domain.entities.usuario import Usuario
 from src.domain.entities.loja import Loja
 from src.domain.entities.produto import Produto
 from src.domain.entities.cliente import Cliente
 from src.domain.entities.fornecedor import Fornecedor
+from src.domain.entities.estoque_saldo import EstoqueSaldo
+from src.domain.entities.estoque_movimentacao import EstoqueMovimentacao
 from src.infrastructure.database.models import (
     TenantModel,
     UsuarioModel,
@@ -20,6 +24,8 @@ from src.infrastructure.database.models import (
     ProdutoModel,
     ClienteModel,
     FornecedorModel,
+    EstoqueSaldoModel,
+    EstoqueMovimentacaoModel,
 )
 
 class RepositorioTenantSQLAlchemy(TenantRepository):
@@ -493,5 +499,164 @@ class RepositorioFornecedorSQLAlchemy(FornecedorRepository):
             )
             for m in models
         ]
+
+
+class RepositorioEstoqueSaldoSQLAlchemy(EstoqueSaldoRepository):
+    """
+    Implementação concreta do repositório de saldos de estoque usando SQLAlchemy.
+    """
+    def __init__(self, db: Session) -> None:
+        self.db = db
+
+    def salvar(self, saldo: EstoqueSaldo) -> EstoqueSaldo:
+        model = self.db.query(EstoqueSaldoModel).filter(EstoqueSaldoModel.id == saldo.id).first()
+        if not model:
+            model = self.db.query(EstoqueSaldoModel).filter(
+                EstoqueSaldoModel.loja_id == saldo.loja_id,
+                EstoqueSaldoModel.produto_id == saldo.produto_id
+            ).first()
+
+        if not model:
+            model = EstoqueSaldoModel(
+                id=saldo.id,
+                loja_id=saldo.loja_id,
+                produto_id=saldo.produto_id,
+                quantidade=saldo.quantidade,
+                tenant_id=saldo.tenant_id
+            )
+            self.db.add(model)
+        else:
+            model.quantidade = saldo.quantidade
+
+        self.db.flush()
+        return EstoqueSaldo(
+            id=model.id,
+            loja_id=model.loja_id,
+            produto_id=model.produto_id,
+            quantidade=model.quantidade,
+            tenant_id=model.tenant_id
+        )
+
+    def obter_por_loja_e_produto(
+        self, loja_id: UUID, produto_id: UUID, tenant_id: UUID
+    ) -> Optional[EstoqueSaldo]:
+        self.db.info["tenant_id"] = tenant_id
+        model = self.db.query(EstoqueSaldoModel).filter(
+            EstoqueSaldoModel.loja_id == loja_id,
+            EstoqueSaldoModel.produto_id == produto_id
+        ).first()
+        if not model:
+            return None
+        return EstoqueSaldo(
+            id=model.id,
+            loja_id=model.loja_id,
+            produto_id=model.produto_id,
+            quantidade=model.quantidade,
+            tenant_id=model.tenant_id
+        )
+
+    def obter_por_loja_e_produto_com_lock(
+        self, loja_id: UUID, produto_id: UUID, tenant_id: UUID
+    ) -> Optional[EstoqueSaldo]:
+        self.db.info["tenant_id"] = tenant_id
+        model = self.db.query(EstoqueSaldoModel).filter(
+            EstoqueSaldoModel.loja_id == loja_id,
+            EstoqueSaldoModel.produto_id == produto_id
+        ).with_for_update().first()
+        if not model:
+            return None
+        return EstoqueSaldo(
+            id=model.id,
+            loja_id=model.loja_id,
+            produto_id=model.produto_id,
+            quantidade=model.quantidade,
+            tenant_id=model.tenant_id
+        )
+
+    def listar_todos(self, tenant_id: UUID) -> List[EstoqueSaldo]:
+        self.db.info["tenant_id"] = tenant_id
+        models = self.db.query(EstoqueSaldoModel).all()
+        return [
+            EstoqueSaldo(
+                id=m.id,
+                loja_id=m.loja_id,
+                produto_id=m.produto_id,
+                quantidade=m.quantidade,
+                tenant_id=m.tenant_id
+            )
+            for m in models
+        ]
+
+
+class RepositorioEstoqueMovimentacaoSQLAlchemy(EstoqueMovimentacaoRepository):
+    """
+    Implementação concreta do repositório de histórico/ledger de movimentações usando SQLAlchemy.
+    """
+    def __init__(self, db: Session) -> None:
+        self.db = db
+
+    def salvar(self, movimentacao: EstoqueMovimentacao) -> EstoqueMovimentacao:
+        model = EstoqueMovimentacaoModel(
+            id=movimentacao.id,
+            loja_id=movimentacao.loja_id,
+            produto_id=movimentacao.produto_id,
+            tipo=movimentacao.tipo,
+            quantidade=movimentacao.quantidade,
+            motivo=movimentacao.motivo,
+            tenant_id=movimentacao.tenant_id,
+            data_movimentacao=movimentacao.data_movimentacao
+        )
+        self.db.add(model)
+        self.db.flush()
+        return EstoqueMovimentacao(
+            id=model.id,
+            loja_id=model.loja_id,
+            produto_id=model.produto_id,
+            tipo=model.tipo,
+            quantidade=model.quantidade,
+            motivo=model.motivo,
+            tenant_id=model.tenant_id,
+            data_movimentacao=model.data_movimentacao
+        )
+
+    def listar_por_loja_e_produto(
+        self, loja_id: UUID, produto_id: UUID, tenant_id: UUID
+    ) -> List[EstoqueMovimentacao]:
+        self.db.info["tenant_id"] = tenant_id
+        models = self.db.query(EstoqueMovimentacaoModel).filter(
+            EstoqueMovimentacaoModel.loja_id == loja_id,
+            EstoqueMovimentacaoModel.produto_id == produto_id
+        ).order_by(EstoqueMovimentacaoModel.data_movimentacao.asc()).all()
+        return [
+            EstoqueMovimentacao(
+                id=m.id,
+                loja_id=m.loja_id,
+                produto_id=m.produto_id,
+                tipo=m.tipo,
+                quantidade=m.quantidade,
+                motivo=m.motivo,
+                tenant_id=m.tenant_id,
+                data_movimentacao=m.data_movimentacao
+            )
+            for m in models
+        ]
+
+    def listar_todas(self, tenant_id: UUID) -> List[EstoqueMovimentacao]:
+        self.db.info["tenant_id"] = tenant_id
+        models = self.db.query(EstoqueMovimentacaoModel).order_by(EstoqueMovimentacaoModel.data_movimentacao.desc()).all()
+        return [
+            EstoqueMovimentacao(
+                id=m.id,
+                loja_id=m.loja_id,
+                produto_id=m.produto_id,
+                tipo=m.tipo,
+                quantidade=m.quantidade,
+                motivo=m.motivo,
+                tenant_id=m.tenant_id,
+                data_movimentacao=m.data_movimentacao
+            )
+            for m in models
+        ]
+
 
 
