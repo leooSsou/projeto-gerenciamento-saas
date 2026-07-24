@@ -32,6 +32,12 @@ class NFeParserService:
 
     @staticmethod
     def parse_xml(xml_content: bytes | str) -> NFeDados:
+        # Segurança contra XML Bomb / Billion Laughs e XXE
+        # NF-e legítimas nunca contêm declarações DOCTYPE ou ENTITY
+        xml_str = xml_content if isinstance(xml_content, str) else xml_content.decode("utf-8", errors="ignore")
+        if "<!doctype" in xml_str.lower() or "<!entity" in xml_str.lower():
+            raise ValueError("XML inválido por motivos de segurança: declarações DOCTYPE ou ENTITY não são permitidas.")
+
         if isinstance(xml_content, str):
             xml_content = xml_content.encode("utf-8")
 

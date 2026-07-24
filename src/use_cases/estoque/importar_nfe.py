@@ -6,6 +6,7 @@ from src.domain.entities.fornecedor import Fornecedor
 from src.domain.entities.produto import Produto
 from src.domain.repositories.fornecedor_repository import FornecedorRepository
 from src.domain.repositories.produto_repository import ProdutoRepository
+from src.domain.repositories.estoque_saldo_repository import EstoqueSaldoRepository
 from src.domain.services.nfe_parser import NFeParserService, NFeDados, ItemNFe
 
 @dataclass(frozen=True)
@@ -37,10 +38,12 @@ class ImportarEstoqueNFe:
     def __init__(
         self,
         fornecedor_repo: FornecedorRepository,
-        produto_repo: ProdutoRepository
+        produto_repo: ProdutoRepository,
+        saldo_repo: EstoqueSaldoRepository
     ) -> None:
         self.fornecedor_repo = fornecedor_repo
         self.produto_repo = produto_repo
+        self.saldo_repo = saldo_repo
 
     def executar(self, input_data: ImportarNFeInput) -> ImportarNFeOutput:
         # 1. Faz o parsing do XML da NF-e
@@ -82,9 +85,20 @@ class ImportarEstoqueNFe:
                 )
 
             if produto_existente:
-                # Produto já existe: recalcula Custo Médio Ponderado
-                # Novo Custo Médio = (Custo Atual + Valor Unitário da NF-e) / 2
-                novo_custo_medio = round((produto_existente.preco_custo + item.valor_unitario) / 2.0, 2)
+                # Produto já existe: recalcula Custo Médio Ponderado real baseado nas quantidades em todas as lojas
+                saldos = self.saldo_repo.listar_todos(input_data.tenant_id)
+                qtd_atual = sum(s.quantidade for s in saldos if s.produto_id == produto_existente.id)
+                
+                denominador = qtd_atual + item.quantidade
+                if denominador > 0:
+                    novo_custo_medio = round(
+                        ((qtd_atual * produto_existente.preco_custo) + (item.quantidade * item.valor_unitario))
+                        / denominador,
+                        2
+                    )
+                else:
+                    novo_custo_medio = round(item.valor_unitario, 2)
+
                 novo_preco_venda = Produto.calcular_preco_venda(
                     preco_custo=novo_custo_medio,
                     markup=produto_existente.markup

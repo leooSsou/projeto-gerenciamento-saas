@@ -7,6 +7,7 @@ from src.domain.entities.usuario import Usuario
 from src.infrastructure.database.repositorios_concrete import (
     RepositorioFornecedorSQLAlchemy,
     RepositorioProdutoSQLAlchemy,
+    RepositorioEstoqueSaldoSQLAlchemy,
 )
 from src.use_cases.estoque.importar_nfe import ImportarEstoqueNFe, ImportarNFeInput
 from src.infrastructure.web.schemas import ImportarNFeResponse
@@ -40,7 +41,8 @@ def importar_xml_nfe(
 
     fornecedor_repo = RepositorioFornecedorSQLAlchemy(db)
     produto_repo = RepositorioProdutoSQLAlchemy(db)
-    use_case = ImportarEstoqueNFe(fornecedor_repo, produto_repo)
+    saldo_repo = RepositorioEstoqueSaldoSQLAlchemy(db)
+    use_case = ImportarEstoqueNFe(fornecedor_repo, produto_repo, saldo_repo)
 
     input_data = ImportarNFeInput(
         xml_content=xml_bytes,

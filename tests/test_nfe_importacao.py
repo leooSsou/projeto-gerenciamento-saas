@@ -6,6 +6,7 @@ from src.use_cases.estoque.importar_nfe import ImportarEstoqueNFe, ImportarNFeIn
 from src.infrastructure.database.repositorios_concrete import (
     RepositorioFornecedorSQLAlchemy,
     RepositorioProdutoSQLAlchemy,
+    RepositorioEstoqueSaldoSQLAlchemy,
 )
 
 # XML de exemplo para testes de NF-e v4.00
@@ -79,7 +80,8 @@ def test_importar_estoque_nfe_fluxo_completo(db_session):
 
     fornecedor_repo = RepositorioFornecedorSQLAlchemy(db_session)
     produto_repo = RepositorioProdutoSQLAlchemy(db_session)
-    use_case = ImportarEstoqueNFe(fornecedor_repo, produto_repo)
+    saldo_repo = RepositorioEstoqueSaldoSQLAlchemy(db_session)
+    use_case = ImportarEstoqueNFe(fornecedor_repo, produto_repo, saldo_repo)
 
     # Primeia importação (produtos novos no catálogo)
     input_1 = ImportarNFeInput(
@@ -100,6 +102,16 @@ def test_importar_estoque_nfe_fluxo_completo(db_session):
     assert prod_1.preco_venda == 80.0  # 40 * (1 + 1.0)
     assert prod_1.codigo_barras == "7891234567890"
 
+    # Criar 10 unidades de estoque com custo 40.0 para prod_1
+    from src.domain.entities.estoque_saldo import EstoqueSaldo
+    saldo_repo.salvar(EstoqueSaldo(
+        loja_id=uuid4(),
+        produto_id=prod_1.id,
+        quantidade=10,
+        tenant_id=tenant_id
+    ))
+    db_session.commit()
+
     # Segunda importação (mesmo produto com valor unitário diferente = 60.0)
     xml_segunda_compra = SAMPLE_NFE_XML.replace("<vUnCom>40.0000</vUnCom>", "<vUnCom>60.0000</vUnCom>")
     input_2 = ImportarNFeInput(
@@ -112,7 +124,7 @@ def test_importar_estoque_nfe_fluxo_completo(db_session):
 
     prod_1_atualizado = output_2.itens_processados[0].produto
     assert output_2.itens_processados[0].novo_produto_cadastrado is False
-    # Custo médio ponderado: (40 + 60) / 2 = 50.0
+    # Custo médio ponderado: ((10 * 40.0) + (10 * 60.0)) / (10 + 10) = 50.0
     assert prod_1_atualizado.preco_custo == 50.0
     # Novo preço de venda com base no markup 1.0: 50 * (1 + 1.0) = 100.0
     assert prod_1_atualizado.preco_venda == 100.0
@@ -160,3 +172,59 @@ def test_api_importar_xml_nfe_endpoint(client: TestClient):
     assert prod_1["codigo_barras"] == "7891234567890"
     assert prod_1["preco_custo"] == 40.0
     assert prod_1["preco_venda"] == 60.0  # 40 * (1 + 0.5)
+
+
+def test_parser_xml_nfe_vulnerabilidade_xml_bomb():
+    """
+    Garante que o parser rejeita XMLs contendo definições de entidades ou DOCTYPEs.
+    """
+    xml_bomb = """<?xml version="1.0"?>
+    <!DOCTYPE lolz [
+     <!ENTITY lol "lol">
+     <!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+    ]>
+    <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe">
+      <NFe><infNFe><emit><CNPJ>12345678000195</CNPJ></emit></infNFe></NFe>
+    </nfeProc>
+    """
+    with pytest.raises(ValueError, match="declarações DOCTYPE ou ENTITY não são permitidas"):
+        NFeParserService.parse_xml(xml_bomb)
+
+
+def test_api_importar_xml_nfe_vulnerabilidade_xml_bomb(client: TestClient):
+    """
+    Garante que a rota HTTP rejeita o upload de XMLs maliciosos com Billion Laughs.
+    """
+    # 1. Registrar e autenticar um usuário
+    client.post("/auth/register", json={
+        "nome_fantasia": "Loja NFe Segura",
+        "razao_social": "Loja NFe Segura LTDA",
+        "cnpj": "12.345.678/0001-95",
+        "dono_nome": "Gerente NFe",
+        "dono_email": "gerentebomb@teste.com",
+        "dono_senha": "senha_segura_nfe"
+    })
+    
+    login_res = client.post("/auth/login", json={
+        "email": "gerentebomb@teste.com",
+        "senha": "senha_segura_nfe"
+    })
+    token = login_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    xml_bomb = """<?xml version="1.0"?>
+    <!DOCTYPE lolz [
+     <!ENTITY lol "lol">
+     <!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+    ]>
+    <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe">
+      <NFe><infNFe><emit><CNPJ>12345678000195</CNPJ></emit></infNFe></NFe>
+    </nfeProc>
+    """
+    response = client.post(
+        "/estoque/importar-xml",
+        files={"file": ("xml_bomb.xml", xml_bomb.encode("utf-8"), "text/xml")},
+        headers=headers
+    )
+    assert response.status_code == 422
+    assert "declarações DOCTYPE ou ENTITY não são permitidas" in response.json()["detail"]
